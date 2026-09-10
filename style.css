@@ -1126,3 +1126,36 @@ button:disabled{opacity:.45;cursor:not-allowed}
   .web-folder-modal{padding:22px 16px 18px;border-radius:12px}
   .web-folder-detail-file{padding-right:46px}
 }
+
+/* v0.3.1 static song detail / related-song navigation -------------------- */
+.web-song-row-link{color:inherit;text-decoration:none;cursor:pointer;transition:border-color .12s ease,filter .12s ease,transform .12s ease}
+.web-song-row-link:hover,.web-song-row-link:focus-visible{border-color:#76559a;filter:brightness(1.08);outline:none}
+.web-song-row-link:active{transform:translateY(1px)}
+.web-detail-open{min-width:70px;color:#e8d5ff}.web-detail-open strong{font-size:28px;line-height:.8}
+.web-song-detail-wrap{max-width:980px}
+.web-song-detail-page{display:grid;gap:10px}
+.web-detail-toolbar{display:flex;align-items:center;gap:12px;justify-content:space-between;margin-bottom:2px}
+.web-detail-toolbar button{min-height:42px;padding:8px 15px;border:1px solid #665278;border-radius:9px;background:linear-gradient(180deg,#30273a,#17131d);color:#fff;font:inherit;font-weight:900;cursor:pointer}
+.web-detail-toolbar button:hover{filter:brightness(1.14)}
+.web-detail-toolbar>span{font-weight:900;color:#d9c6eb}
+.web-song-detail-card{border-radius:14px;box-shadow:0 16px 44px rgba(0,0,0,.32),inset 0 0 0 1px rgba(255,41,214,.07)}
+.web-detail-ruby{padding:7px 2px 2px;color:#a99fb3;font-size:13px;line-height:1.5;overflow-wrap:anywhere}
+.web-detail-artist-links{display:flex;flex-wrap:wrap;gap:7px;align-items:center;min-width:0}
+.web-detail-values{display:flex;flex-wrap:wrap;gap:6px;align-items:center;min-height:28px;color:#fff;font-size:15px;font-weight:800;line-height:1.5;overflow-wrap:anywhere}
+.web-detail-entity-link{display:inline-flex;align-items:center;gap:7px;max-width:100%;padding:5px 9px;border:1px solid #744584;border-radius:8px;background:linear-gradient(180deg,#321b40,#160d20);color:#fff;text-decoration:none;font-weight:900;overflow-wrap:anywhere;transition:filter .12s ease,border-color .12s ease}
+.web-detail-entity-link span{color:#f4a8e8;font-size:18px;line-height:1}
+.web-detail-entity-link:hover,.web-detail-entity-link:focus-visible{filter:brightness(1.2);border-color:#c16ed3;outline:none}
+.web-detail-artist-links .web-detail-entity-link{font-size:clamp(18px,2.3vw,25px);padding:5px 10px;background:transparent;border-color:transparent;color:#f6f0ff}
+.web-detail-artist-links .web-detail-entity-link:hover{background:#1b1025;border-color:#744584}
+.web-detail-year-link{color:#fff;text-decoration:none}.web-detail-year-link:hover{text-decoration:underline;color:#ffc7ef}
+.web-detail-empty{color:#817889;font-weight:700}
+.web-detail-tie-summary{margin-top:10px;padding:10px 12px;border:1px solid #3c265d;border-radius:9px;background:#080514;color:#d9cce4;line-height:1.5}
+.web-detail-tag-section{margin-top:10px;padding:12px;border:1px solid #4b355e;border-radius:10px;background:linear-gradient(180deg,#100a18,#08050d)}
+.web-related-header{margin-bottom:3px}
+@media(max-width:600px){
+  .web-detail-open{min-width:0;justify-self:end}.web-detail-open strong{font-size:24px}
+  .web-song-detail-card{padding:10px}.web-detail-toolbar{gap:8px}
+  .web-detail-values{font-size:13px;gap:5px}.web-detail-entity-link{padding:5px 7px}
+  .web-detail-artist-links .web-detail-entity-link{font-size:17px;padding:4px 6px}
+}
+

@@ -21,12 +21,14 @@ function topNav(){return `<div class="top nav common-user-nav"><a class="navbtn"
 function pageShell(inner, cls='web-static-page'){app.innerHTML=`<div class="wrap ${cls}">${inner}${footer()}</div>`;window.scrollTo(0,0)}
 
 function songMeta(s){return [s.tie_up,s.op_ed,s.tie_up_category,s.release_year?`${s.release_year}年`:'' ].filter(Boolean).join(' / ')}
+function songHref(s){return `#song/${encodeURIComponent(String(s?.id||''))}`}
+function entityHref(mode,value){return `#entity/${encodeURIComponent(String(mode||''))}/${encodeURIComponent(String(value||''))}`}
 function songRow(s){
   const tags=[];
   if(s.video_count>1)tags.push(`${s.video_count}動画`);
   for(const x of (s.vocal_labels||[]))tags.push(x);
   for(const x of (s.languages||[]))tags.push(x);
-  return `<article class="denmoku-song-row"><div class="denmoku-song-main"><div class="denmoku-song-title">${esc(s.song_name||'曲名不明')}</div><div class="denmoku-song-artist">${esc(s.artists||'歌手情報なし')}</div>${songMeta(s)?`<div class="denmoku-song-meta">${esc(songMeta(s))}</div>`:''}${tags.length?`<div>${tags.map(x=>`<span class="web-chip">${esc(x)}</span>`).join('')}</div>`:''}</div><div class="web-song-count"><strong>✓</strong>選曲可能</div></article>`
+  return `<a class="denmoku-song-row web-song-row-link" href="${songHref(s)}"><div class="denmoku-song-main"><div class="denmoku-song-title">${esc(s.song_name||'曲名不明')}</div><div class="denmoku-song-artist">${esc(s.artists||'歌手情報なし')}</div>${songMeta(s)?`<div class="denmoku-song-meta">${esc(songMeta(s))}</div>`:''}${tags.length?`<div>${tags.map(x=>`<span class="web-chip">${esc(x)}</span>`).join('')}</div>`:''}</div><div class="web-song-count web-detail-open"><strong>›</strong>詳細</div></a>`
 }
 function renderSongList(target, list, empty='該当する曲がありません', limit=300){
   target.innerHTML='';
@@ -261,13 +263,11 @@ function renderFolderBrowser(){
   function closeDetail(){detailModal.hidden=true}
   function showVideoDetail(item){
     const song=item.song_id?songMap.get(String(item.song_id)):null;
+    if(song){location.hash=songHref(song);return}
     detailBody.innerHTML=`
       <div class="web-folder-detail-file">🎬 ${esc(item.name)}</div>
-      ${song?`<h2 id="folderDetailTitle">${esc(song.song_name||'曲名不明')}</h2>
-        <div class="web-folder-detail-artist">${esc(song.artists||'歌手情報なし')}</div>
-        ${songMeta(song)?`<div class="web-folder-detail-meta">${esc(songMeta(song))}</div>`:''}
-        <div class="web-folder-detail-note">このページは検索専用です。予約操作はKaraokeLocal本体から行ってください。</div>`
-      :`<h2 id="folderDetailTitle">楽曲DB未紐づけ動画</h2><div class="web-folder-detail-note">ファイル名から動画を確認できます。</div>`}`;
+      <h2 id="folderDetailTitle">楽曲DB未紐づけ動画</h2>
+      <div class="web-folder-detail-note">この動画は楽曲DBに紐づいていないため、ファイル名のみ表示しています。</div>`;
     detailModal.hidden=false;
   }
   function activateSelected(){
@@ -313,6 +313,99 @@ function renderFolderBrowser(){
   loadFolder();
 }
 
+function uniqueValues(values){return [...new Set((Array.isArray(values)?values:[]).map(v=>String(v??'').trim()).filter(Boolean))]}
+function relatedSongs(mode,value){
+  const key=norm(value);
+  if(!key)return[];
+  return DATA.songs.filter(s=>{
+    if(mode==='artist')return norm(s.artists)===key;
+    if(mode==='lyricist')return vals(s.lyricists).some(v=>norm(v)===key);
+    if(mode==='composer')return vals(s.composers).some(v=>norm(v)===key);
+    if(mode==='arranger')return vals(s.arrangers).some(v=>norm(v)===key);
+    if(mode==='tieup')return norm(s.tie_up)===key;
+    if(mode==='series')return vals(s.series).some(v=>norm(v)===key);
+    if(mode==='category')return vals(s.tie_up_category_id).some(v=>String(v)===String(value));
+    if(mode==='year')return String(s.release_year||'')===String(value)||String(s.tie_up_release_year||'')===String(value);
+    return false;
+  });
+}
+function entityLabel(mode){return ({artist:'歌手',lyricist:'作詞',composer:'作曲',arranger:'編曲',tieup:'タイアップ',series:'シリーズ',category:'カテゴリー',year:'リリース年'}[mode]||'関連項目')}
+function entityDisplayName(mode,value){
+  if(mode!=='category')return String(value||'');
+  for(const s of DATA.songs){
+    const ids=vals(s.tie_up_category_id), names=vals(s.tie_up_category);
+    const i=ids.findIndex(v=>String(v)===String(value));
+    if(i>=0)return names[i]||String(value);
+  }
+  return String(value||'');
+}
+function renderEntity(mode,value){
+  const label=entityLabel(mode), display=entityDisplayName(mode,value), list=relatedSongs(mode,value);
+  document.title=`ITSUKI - ${display}`;
+  pageShell(`${topNav()}<header class="browse-header web-related-header"><div class="browse-icon">🔗</div><div><div class="browse-title">${esc(display||label)}</div><div class="browse-note">${esc(label)}から関連する曲 / ${nf(list.length)}曲</div></div></header><div class="web-detail-toolbar"><button id="relatedBack" type="button">← 戻る</button></div><main id="relatedResults" class="browse-results"></main>`,'browse-page');
+  document.getElementById('relatedBack').onclick=()=>{if(history.length>1)history.back();else location.hash='#top'};
+  renderSongList(document.getElementById('relatedResults'),list,`${display||label}に関連する曲はありません`,500);
+}
+function detailLinkList(mode,values){
+  const list=uniqueValues(values);
+  if(!list.length)return '<span class="web-detail-empty">―</span>';
+  return list.map(v=>`<a class="web-detail-entity-link" href="${entityHref(mode,v)}">${esc(v)}<span>›</span></a>`).join('');
+}
+function detailCell(label,mode,values,wide=false){
+  const list=uniqueValues(values);
+  return `<div class="reserve-detail-cell${wide?' reserve-detail-wide':''}"><div class="reserve-detail-label">${esc(label)}</div><div class="web-detail-values">${mode?detailLinkList(mode,list):(list.length?list.map(esc).join(' / '):'<span class="web-detail-empty">―</span>')}</div></div>`;
+}
+function categoryDetailCell(s){
+  const ids=vals(s.tie_up_category_id), names=vals(s.tie_up_category);
+  const links=ids.map((id,i)=>({id,name:names[i]||id})).filter(x=>x.id);
+  return `<div class="reserve-detail-cell"><div class="reserve-detail-label">カテゴリー</div><div class="web-detail-values">${links.length?links.map(x=>`<a class="web-detail-entity-link" href="${entityHref('category',x.id)}">${esc(x.name)}<span>›</span></a>`).join(''):'<span class="web-detail-empty">―</span>'}</div></div>`;
+}
+function renderSongDetail(songId){
+  const song=DATA.songs.find(s=>String(s.id)===String(songId));
+  if(!song){document.title='ITSUKI - 曲が見つかりません';pageShell(`${topNav()}<div class="card bad"><div class="big">曲が見つかりません</div><p>公開データが更新された可能性があります。</p></div>`);return}
+  document.title=`ITSUKI - ${song.song_name||'曲詳細'}`;
+  const badges=[];
+  if(song.video_count)badges.push(`${song.video_count}動画`);
+  for(const x of (song.vocal_labels||[]))badges.push(x);
+  for(const x of (song.languages||[]))badges.push(x);
+  if(song.features?.mv_pv)badges.push('MV・PV');
+  if(song.features?.live)badges.push('LIVEカラオケ');
+  if(song.features?.anime)badges.push('アニメ・ゲーム映像');
+  if(song.features?.parts)badges.push('パート分け');
+  const artistLinks=song.artists?[song.artists]:[];
+  const tieDisplay=[song.tie_up||'',song.op_ed?`(${song.op_ed})`:''].filter(Boolean).join(' ');
+  const tags=uniqueValues(vals(song.tags));
+  const aliases=uniqueValues(vals(song.aliases));
+  pageShell(`${topNav()}<div class="web-song-detail-page">
+    <div class="web-detail-toolbar"><button id="songDetailBack" type="button">← 戻る</button><span>曲詳細</span></div>
+    <section class="reserve-song-card web-song-detail-card">
+      <div class="reserve-song-line reserve-song-title-line"><div class="reserve-title">${esc(song.song_name||'曲名不明')}</div></div>
+      ${song.song_ruby?`<div class="web-detail-ruby">${esc(song.song_ruby)}</div>`:''}
+      <div class="reserve-song-line reserve-artist-row"><div class="reserve-song-icon reserve-person-icon" aria-hidden="true"></div><div class="web-detail-artist-links">${detailLinkList('artist',artistLinks)}</div></div>
+      <div class="reserve-core-grid">
+        <div class="reserve-core-cell"><span>公開動画</span><strong>${nf(song.video_count)}本</strong></div>
+        <div class="reserve-core-cell reserve-year-cell"><span>リリース年</span><strong>${song.release_year?`<a class="web-detail-year-link" href="${entityHref('year',song.release_year)}">${esc(song.release_year)}年 ›</a>`:'―'}</strong></div>
+      </div>
+      <div class="reserve-detail-grid">
+        ${detailCell('作詞','lyricist',vals(song.lyricists))}
+        ${detailCell('作曲','composer',vals(song.composers))}
+        ${detailCell('編曲','arranger',vals(song.arrangers),true)}
+        ${detailCell('タイアップ','tieup',song.tie_up?[song.tie_up]:[],true)}
+        ${categoryDetailCell(song)}
+        ${detailCell('シリーズ','series',vals(song.series))}
+        ${detailCell('OP / ED',null,song.op_ed?[song.op_ed]:[])}
+        ${detailCell('タイアップ年',null,song.tie_up_release_year?[`${song.tie_up_release_year}年`]:[])}
+        ${detailCell('別名・別表記',null,aliases,true)}
+        ${detailCell('キーワード',null,vals(song.song_keyword),true)}
+      </div>
+      ${tieDisplay?`<div class="web-detail-tie-summary">🎞️ ${esc(tieDisplay)}</div>`:''}
+      ${tags.length?`<div class="web-detail-tag-section"><div class="reserve-related-title">タグ</div><div class="reserve-related-tags">${tags.map(t=>`<span class="reserve-related-chip">${esc(t)}</span>`).join('')}</div></div>`:''}
+      ${badges.length?`<div class="web-detail-tag-section"><div class="reserve-related-title">この曲の公開情報</div><div class="reserve-related-tags">${uniqueValues(badges).map(t=>`<span class="reserve-related-chip">${esc(t)}</span>`).join('')}</div></div>`:''}
+    </section>
+  </div>`,'web-song-detail-wrap');
+  document.getElementById('songDetailBack').onclick=()=>{if(history.length>1)history.back();else location.hash='#top'};
+}
+
 function renderAll(){document.title='ITSUKI - 全曲一覧';pageShell(`${topNav()}<header class="browse-header"><div class="browse-icon">📚</div><div><div class="browse-title">全曲一覧</div><div class="browse-note">選曲可能な${nf(DATA.song_count)}曲</div></div></header><main id="browseResults" class="browse-results"></main>`,'browse-page');renderSongList(document.getElementById('browseResults'),DATA.songs,'',500)}
 
 function renderForeign(){const counts=new Map();for(const s of DATA.songs)for(const l of (s.languages||[]))counts.set(l,(counts.get(l)||0)+1);const langs=[...counts.entries()].sort((a,b)=>a[0].localeCompare(b[0],'ja'));document.title='ITSUKI - 外国曲';pageShell(`${topNav()}<header class="browse-header"><div class="browse-icon">🌐</div><div><div class="browse-title">外国曲</div><div class="browse-note">言語を選択して曲一覧を表示</div></div></header><div id="entityHeader" class="browse-entity-header" style="display:none"></div><main id="browseResults" class="browse-results"><div class="web-language-grid">${langs.map(([l,c])=>`<button class="web-language-btn" data-lang="${esc(l)}"><img src="./assets/flags/${flagPath(l)}" alt=""><strong>${esc(l)}</strong><small>${nf(c)}曲</small></button>`).join('')}</div></main>`,'browse-page');const root=document.getElementById('browseResults'),head=document.getElementById('entityHeader');root.querySelectorAll('[data-lang]').forEach(b=>b.onclick=()=>{const l=b.dataset.lang;head.style.display='flex';head.innerHTML=`<button type="button">← 言語一覧へ</button><strong>${esc(l)}</strong>`;head.querySelector('button').onclick=renderForeign;renderSongList(root,DATA.songs.filter(s=>(s.languages||[]).includes(l)))})}
@@ -327,10 +420,39 @@ function renderTieup(){document.title='ITSUKI - タイアップ';const catMap=ne
 
 function renderEra(){document.title='ITSUKI - あの頃・この頃';const currentYear=new Date().getFullYear();const cats=new Map();for(const s of DATA.songs){const ids=vals(s.tie_up_category_id),names=vals(s.tie_up_category);ids.forEach((id,i)=>{if(id&&!cats.has(id))cats.set(id,names[i]||id)})}pageShell(`${topNav()}<div class="era-shell"><div class="era-head"><span>🕒</span><div><h1>あの頃・この頃</h1><p>年代から選曲できる曲を探します</p></div></div><div class="era-panel"><div class="web-era-controls"><div class="web-era-mode"><button id="modeYear" class="active">年から探す</button><button id="modeAge">年齢から探す</button></div><div class="web-era-fields"><label><span id="field1Label">西暦</span><input id="field1" type="number" value="${currentYear}" min="1901" max="2199"></label><label><span id="field2Label">ジャンル</span><select id="genre"><option value="">すべて</option>${[...cats].sort((a,b)=>a[0].localeCompare(b[0])).map(([id,name])=>`<option value="${esc(id)}">${esc(name)}</option>`).join('')}</select></label><label id="ageNowWrap" style="display:none"><span>現在の年齢</span><input id="ageNow" type="number" value="30" min="0" max="120"></label><label id="ageThenWrap" style="display:none"><span>当時の年齢</span><input id="ageThen" type="number" value="18" min="0" max="120"></label></div><button class="web-primary-btn" id="eraSearch">検索</button><div id="eraComputed" class="era-computed"></div></div></div></div><main id="eraResults" class="denmoku-results era-results"><div class="denmoku-empty">条件を指定して検索してください</div></main>`,'era-page');let mode='year';const fy=document.getElementById('field1'),genre=document.getElementById('genre'),res=document.getElementById('eraResults'),computed=document.getElementById('eraComputed');function sw(m){mode=m;document.getElementById('modeYear').classList.toggle('active',m==='year');document.getElementById('modeAge').classList.toggle('active',m==='age');document.getElementById('ageNowWrap').style.display=m==='age'?'grid':'none';document.getElementById('ageThenWrap').style.display=m==='age'?'grid':'none';fy.parentElement.style.display=m==='year'?'grid':'none'}document.getElementById('modeYear').onclick=()=>sw('year');document.getElementById('modeAge').onclick=()=>sw('age');document.getElementById('eraSearch').onclick=()=>{let year;if(mode==='year')year=Number(fy.value);else year=currentYear-Number(document.getElementById('ageNow').value)+Number(document.getElementById('ageThen').value);computed.textContent=`対象年：${year}年`;const g=genre.value;const list=DATA.songs.filter(s=>(String(s.release_year)===String(year)||String(s.tie_up_release_year)===String(year))&&(!g||vals(s.tie_up_category_id).includes(g)));renderSongList(res,list,`${year}年に該当する曲がありません`)} }
 
-function isoWeek(ts){const d=new Date(ts*1000);const x=new Date(Date.UTC(d.getUTCFullYear(),d.getUTCMonth(),d.getUTCDate()));const day=x.getUTCDay()||7;x.setUTCDate(x.getUTCDate()+4-day);const yearStart=new Date(Date.UTC(x.getUTCFullYear(),0,1));const week=Math.ceil((((x-yearStart)/86400000)+1)/7);return `${x.getUTCFullYear()}-W${String(week).padStart(2,'0')}`}
-function renderUpdates(){document.title='ITSUKI - 新曲・更新曲';const days=Number(DATA.new_update_days||15),cut=Math.floor(Date.now()/1000)-days*86400;const list=DATA.songs.filter(s=>Number(s.updated_at||0)>=cut).sort((a,b)=>Number(b.updated_at)-Number(a.updated_at));const groups=new Map();for(const s of list){const k=isoWeek(s.updated_at);if(!groups.has(k))groups.set(k,[]);groups.get(k).push(s)};pageShell(`${topNav()}<div class="updates-head"><div><div class="big">✨ 新曲・更新曲</div><div class="muted">直近${days}日間 / ${nf(list.length)}曲</div></div></div><main id="updatesResults"></main>`,'updates-page');const root=document.getElementById('updatesResults');if(!list.length){root.innerHTML='<div class="card"><span class="muted">指定期間内の新曲・更新曲はありません</span></div>';return}root.innerHTML=[...groups.entries()].map(([k,items])=>`<section class="update-group"><div class="update-group-title">${esc(k)}</div><div class="update-group-list">${items.map(songRow).join('')}</div></section>`).join('')}
+function isoWeekNumber(y,m,d){const x=new Date(Date.UTC(y,m,d));const day=x.getUTCDay()||7;x.setUTCDate(x.getUTCDate()+4-day);const yearStart=new Date(Date.UTC(x.getUTCFullYear(),0,1));return Math.ceil((((x-yearStart)/86400000)+1)/7)}
+function updateWeekInfo(ts){
+  const d=new Date(Number(ts||0)*1000);
+  const start=new Date(d.getFullYear(),d.getMonth(),d.getDate());
+  start.setDate(start.getDate()-start.getDay());
+  const end=new Date(start);end.setDate(end.getDate()+7);
+  const probe=new Date(start);probe.setDate(probe.getDate()+1);
+  const week=isoWeekNumber(probe.getFullYear(),probe.getMonth(),probe.getDate());
+  const key=`${start.getFullYear()}-${String(start.getMonth()+1).padStart(2,'0')}-${String(start.getDate()).padStart(2,'0')}`;
+  const label=start.getFullYear()===end.getFullYear()
+    ?`W${String(week).padStart(2,'0')}(${start.getFullYear()}年${start.getMonth()+1}月${start.getDate()}日～${end.getMonth()+1}月${end.getDate()}日)更新分`
+    :`W${String(week).padStart(2,'0')}(${start.getFullYear()}年${start.getMonth()+1}月${start.getDate()}日～${end.getFullYear()}年${end.getMonth()+1}月${end.getDate()}日)更新分`;
+  return {key,week,label};
+}
+function renderUpdates(){document.title='ITSUKI - 新曲・更新曲';const days=Math.max(1,Math.min(60,Number(DATA.new_update_days||15)||15)),now=new Date(),todayStart=Math.floor(new Date(now.getFullYear(),now.getMonth(),now.getDate()).getTime()/1000),cut=todayStart-(days-1)*86400;const list=DATA.songs.filter(s=>Number(s.updated_at||0)>=cut).sort((a,b)=>Number(b.updated_at)-Number(a.updated_at));const groups=new Map();for(const s of list){const info=updateWeekInfo(s.updated_at);if(!groups.has(info.key))groups.set(info.key,{...info,items:[]});groups.get(info.key).items.push(s)};pageShell(`${topNav()}<div class="updates-head"><div><div class="big">✨ 新曲・更新曲</div><div class="muted">直近${days}日間 / ${nf(list.length)}曲</div></div></div><main id="updatesResults"></main>`,'updates-page');const root=document.getElementById('updatesResults');if(!list.length){root.innerHTML='<div class="card"><span class="muted">指定期間内の新曲・更新曲はありません</span></div>';return}root.innerHTML=[...groups.values()].map(g=>`<section class="update-group"><div class="update-group-title">${esc(g.label)}</div><div class="update-group-list">${g.items.map(songRow).join('')}</div></section>`).join('')}
 
-function route(){document.onkeydown=null;const h=(location.hash||'#top').replace(/^#/,'');const [a,b]=h.split('/');if(a==='top'||!a)return renderTop();if(a==='search')return renderSearch(b||'title');if(a==='feature')return renderFeature(b);if(a==='folder')return renderFolderBrowser();if(a==='all')return renderAll();if(a==='foreign')return renderForeign();if(a==='tieup')return renderTieup();if(a==='era')return renderEra();if(a==='updates')return renderUpdates();renderTop()}
+function route(){
+  document.onkeydown=null;
+  const h=(location.hash||'#top').replace(/^#/,'');
+  const parts=h.split('/'),a=parts[0]||'',b=parts[1]||'';
+  if(a==='top'||!a)return renderTop();
+  if(a==='search')return renderSearch(b||'title');
+  if(a==='feature')return renderFeature(b);
+  if(a==='folder')return renderFolderBrowser();
+  if(a==='all')return renderAll();
+  if(a==='foreign')return renderForeign();
+  if(a==='tieup')return renderTieup();
+  if(a==='era')return renderEra();
+  if(a==='updates')return renderUpdates();
+  if(a==='song')return renderSongDetail(decodeURIComponent(parts.slice(1).join('/')));
+  if(a==='entity')return renderEntity(decodeURIComponent(b),decodeURIComponent(parts.slice(2).join('/')));
+  renderTop();
+}
 
 async function init(){
   try{
