@@ -49,7 +49,7 @@ function renderTop(){
           <a class="category-btn top-main-btn c-red" href="#updates"><span class="category-icon">✨</span><span>新曲・更新曲</span></a>
           <a class="category-btn top-main-btn c-orange" href="#search/artist"><span class="category-icon">🎤</span><span>歌手名</span></a>
           <a class="category-btn top-main-btn c-green" href="#search/title"><span class="category-icon">🎵</span><span>曲名</span></a>
-          <a class="category-btn top-main-btn c-blue" href="#all"><span class="category-icon">📚</span><span>全曲一覧</span></a>
+          <a class="category-btn top-main-btn c-blue" href="#folder"><span class="category-icon">📁</span><span>フォルダから探す</span></a>
         </div>
         <div class="top-middle-grid">
           <a class="category-btn top-middle-btn c-pink" href="#feature/mv-pv"><span class="category-icon">🎬</span><span>MV・PV</span></a>
@@ -60,6 +60,7 @@ function renderTop(){
           <a class="category-btn top-middle-btn c-gold" href="#search/keyword"><span class="category-icon">🔎</span><span>キーワード</span></a>
           <a class="category-btn top-middle-btn c-teal" href="#tieup"><span class="category-icon">🎞️</span><span>タイアップ</span></a>
           <a class="category-btn top-middle-btn c-purple" href="#foreign"><span class="category-icon">🌐</span><span>外国曲</span></a>
+          <a class="category-btn top-middle-btn c-blue" href="#all"><span class="category-icon">📚</span><span>全曲一覧</span></a>
         </div>
       </section>
     </div>`);
@@ -114,6 +115,204 @@ const featureDefs={
 };
 function renderFeature(slug){const d=featureDefs[slug]||featureDefs['mv-pv'];const rows=DATA.songs.filter(s=>s.features&&s.features[d[0]]);document.title='ITSUKI - '+d[2];pageShell(`${topNav()}<header class="browse-header"><div class="browse-icon">${d[1]}</div><div><div class="browse-title">${d[2]}</div><div class="browse-note">${d[3]}</div></div></header><div id="entityHeader" class="browse-entity-header" style="display:none"></div><main id="browseResults" class="browse-results"></main>`,'browse-page');const root=document.getElementById('browseResults'),head=document.getElementById('entityHeader');const map=new Map();for(const s of rows){const name=(s.artists||'歌手情報なし').trim();const key=norm(name);if(!map.has(key))map.set(key,{key,name,count:0,ids:new Set()});const e=map.get(key);e.ids.add(s.id);e.count=e.ids.size}const list=[...map.values()].sort((a,b)=>a.name.localeCompare(b.name,'ja'));root.innerHTML=entityRows(list);bindEntityClicks(root,list,x=>{head.style.display='flex';head.innerHTML=`<button type="button">← 歌手一覧へ</button><strong>${esc(x.name)}</strong>`;head.querySelector('button').onclick=()=>renderFeature(slug);renderSongList(root,rows.filter(s=>norm(s.artists)===x.key))})}
 
+
+function renderFolderBrowser(){
+  document.title='ITSUKI - フォルダから探す';
+  const fb=DATA.folder_browser||{};
+  if(!fb.available||!Array.isArray(fb.roots)||!fb.roots.length){
+    pageShell(`${topNav()}<div class="card bad"><div class="big">フォルダ一覧を作成できません</div><p>KaraokeLocalに動画ルートが設定され、動画スキャンが完了しているか確認してください。</p></div>`);
+    return;
+  }
+  app.innerHTML=`
+  <div class="digizo-browser-page web-folder-browser-page">
+    <section class="digizo-browser-screen" aria-label="フォルダから探す">
+      <div class="digizo-browser-head">
+        <strong id="screenTitle">デバイス(すべて)</strong>
+        <span id="itemCounter">0 / 0</span>
+      </div>
+      <div class="digizo-list-shell">
+        <div id="fileList" class="digizo-file-list" role="listbox" aria-label="フォルダと動画ファイル"></div>
+        <div class="digizo-scrollbar" aria-hidden="true"><span id="scrollThumb"></span></div>
+      </div>
+      <div class="digizo-browser-foot">
+        <div id="currentPathLabel" class="digizo-current-path">デバイス/</div>
+        <button id="editToggle" type="button" class="digizo-edit-button" aria-expanded="false">🔍 編集</button>
+      </div>
+      <div id="editPanel" class="digizo-edit-panel" hidden>
+        <input id="filterText" type="search" placeholder="フォルダ名・ファイル名で絞り込み" autocomplete="off">
+        <select id="sortMode" aria-label="並び替え">
+          <option value="name-asc">名前：昇順</option>
+          <option value="name-desc">名前：降順</option>
+        </select>
+      </div>
+    </section>
+    <section class="digizo-browser-controls">
+      <div id="selectionInfo" class="digizo-selection-info">項目を選択してください</div>
+      <div class="digizo-control-grid">
+        <div class="digizo-dpad" aria-label="方向キー">
+          <button type="button" class="pad-up" data-folder-action="up">▲</button>
+          <button type="button" class="pad-left" data-folder-action="back">◀</button>
+          <button type="button" class="pad-center" data-folder-action="open">●</button>
+          <button type="button" class="pad-right" data-folder-action="open">▶</button>
+          <button type="button" class="pad-down" data-folder-action="down">▼</button>
+        </div>
+        <div class="digizo-action-buttons">
+          <button type="button" data-folder-action="top">TOP</button>
+          <button type="button" data-folder-action="back">戻る</button>
+          <button type="button" class="primary" data-folder-action="open">決定</button>
+        </div>
+      </div>
+    </section>
+  </div>
+  <div id="folderDetailModal" class="web-folder-modal-backdrop" hidden>
+    <div class="web-folder-modal" role="dialog" aria-modal="true" aria-labelledby="folderDetailTitle">
+      <button id="folderDetailClose" class="web-folder-modal-close" type="button" aria-label="閉じる">×</button>
+      <div id="folderDetailBody"></div>
+    </div>
+  </div>`;
+
+  const fileList=document.getElementById('fileList');
+  const filterText=document.getElementById('filterText');
+  const sortMode=document.getElementById('sortMode');
+  const selectionInfo=document.getElementById('selectionInfo');
+  const screenTitle=document.getElementById('screenTitle');
+  const itemCounter=document.getElementById('itemCounter');
+  const currentPathLabel=document.getElementById('currentPathLabel');
+  const scrollThumb=document.getElementById('scrollThumb');
+  const editToggle=document.getElementById('editToggle');
+  const editPanel=document.getElementById('editPanel');
+  const detailModal=document.getElementById('folderDetailModal');
+  const detailBody=document.getElementById('folderDetailBody');
+  const songMap=new Map((DATA.songs||[]).map(s=>[String(s.id),s]));
+  let rootId='',currentPath='',currentRootName='',rawItems=[],visibleItems=[],selectedIndex=0;
+
+  function itemKey(x){return x?`${x.type}:${x.video_id||x.root_id||x.name}`:''}
+  function selectedItem(){return visibleItems[selectedIndex]||null}
+  function rowIconClass(item){return item.type==='video'?'video':'folder'}
+  function displayPath(){
+    if(rootId==='')return 'デバイス/';
+    const tail=currentPath?'/'+currentPath.replace(/\\/g,'/'):'';
+    return `${currentRootName||'HDD'}${tail}/`;
+  }
+  function updateChrome(){
+    screenTitle.textContent=rootId===''?'デバイス(すべて)':`${currentRootName||'HDD'}(すべて)`;
+    currentPathLabel.textContent=displayPath();
+    const total=visibleItems.length;
+    itemCounter.textContent=total?`${selectedIndex+1} / ${total}`:'0 / 0';
+    const row=fileList.querySelector('.digizo-file-row');
+    const rowH=row?Math.max(1,row.getBoundingClientRect().height):48;
+    const visibleRows=Math.max(1,Math.floor((fileList.clientHeight||rowH)/rowH));
+    const ratio=total?Math.min(1,visibleRows/total):1;
+    const thumbH=Math.max(10,ratio*100);
+    const top=total<=1?0:(selectedIndex/(total-1))*(100-thumbH);
+    scrollThumb.style.height=`${thumbH}%`;scrollThumb.style.top=`${top}%`;
+  }
+  function selectionLabel(item){
+    if(!item)return '項目がありません';
+    if(item.type!=='video')return `フォルダ：${item.name}`;
+    const song=item.song_id?songMap.get(String(item.song_id)):null;
+    return song?`動画：${item.name}　｜　${song.song_name||''} / ${song.artists||''}`:`動画：${item.name}`;
+  }
+  function updateSelection(){
+    [...fileList.querySelectorAll('.digizo-file-row')].forEach((el,i)=>{
+      const on=i===selectedIndex;el.classList.toggle('selected',on);el.setAttribute('aria-selected',on?'true':'false');
+      if(on)el.scrollIntoView({block:'nearest'});
+    });
+    selectionInfo.textContent=selectionLabel(selectedItem());updateChrome();
+  }
+  function applyView(){
+    const keepKey=itemKey(selectedItem()),q=filterText.value.trim().toLocaleLowerCase('ja');
+    visibleItems=rawItems.filter(item=>!q||item.name.toLocaleLowerCase('ja').includes(q));
+    const desc=sortMode.value==='name-desc';
+    visibleItems.sort((a,b)=>{
+      if(a.type!==b.type)return a.type==='video'?1:-1;
+      const cmp=a.name.localeCompare(b.name,'ja',{numeric:true,sensitivity:'base'});return desc?-cmp:cmp;
+    });
+    const kept=keepKey?visibleItems.findIndex(x=>itemKey(x)===keepKey):-1;
+    if(kept>=0)selectedIndex=kept;
+    selectedIndex=Math.max(0,Math.min(selectedIndex,visibleItems.length-1));renderRows();
+  }
+  function renderRows(){
+    if(!visibleItems.length){fileList.innerHTML='<div class="digizo-empty">表示できる項目がありません</div>';updateSelection();return}
+    fileList.innerHTML=visibleItems.map((item,i)=>`<button type="button" class="digizo-file-row${i===selectedIndex?' selected':''}" role="option" aria-selected="${i===selectedIndex?'true':'false'}" data-index="${i}"><span class="digizo-item-icon ${rowIconClass(item)}" aria-hidden="true"></span><span class="digizo-item-name">${esc(item.name)}</span></button>`).join('');
+    fileList.querySelectorAll('.digizo-file-row').forEach(row=>{
+      row.addEventListener('focus',()=>{selectedIndex=Number(row.dataset.index)||0;updateSelection()});
+      row.addEventListener('click',()=>{selectedIndex=Number(row.dataset.index)||0;updateSelection()});
+      row.addEventListener('dblclick',()=>{selectedIndex=Number(row.dataset.index)||0;updateSelection();activateSelected()});
+    });updateSelection();
+  }
+  function loadFolder(rid='',path=''){
+    if(rid===''){
+      rootId='';currentPath='';currentRootName='';
+      rawItems=fb.roots.map(r=>({type:'root',name:r.name||'動画ルート',root_id:String(r.id)}));
+      selectedIndex=0;applyView();return;
+    }
+    const root=fb.roots.find(r=>String(r.id)===String(rid));
+    if(!root){rawItems=[];selectedIndex=0;renderRows();return}
+    const key=String(path||'').replace(/\\/g,'/').replace(/^\/+|\/+$/g,'');
+    const node=(root.entries||{})[key];
+    rootId=String(root.id);currentPath=key;currentRootName=root.name||'HDD';
+    if(!node){rawItems=[];selectedIndex=0;renderRows();return}
+    const folders=(node.folders||[]).map(name=>({type:'folder',name:String(name)}));
+    const files=(node.files||[]).map(x=>({type:'video',name:String(x.name||''),video_id:Number(x.video_id||0),song_id:String(x.song_id||'')}));
+    rawItems=folders.concat(files);selectedIndex=0;applyView();
+  }
+  function childPath(name){return [currentPath,name].filter(Boolean).join('/')}
+  function closeDetail(){detailModal.hidden=true}
+  function showVideoDetail(item){
+    const song=item.song_id?songMap.get(String(item.song_id)):null;
+    detailBody.innerHTML=`
+      <div class="web-folder-detail-file">🎬 ${esc(item.name)}</div>
+      ${song?`<h2 id="folderDetailTitle">${esc(song.song_name||'曲名不明')}</h2>
+        <div class="web-folder-detail-artist">${esc(song.artists||'歌手情報なし')}</div>
+        ${songMeta(song)?`<div class="web-folder-detail-meta">${esc(songMeta(song))}</div>`:''}
+        <div class="web-folder-detail-note">このページは検索専用です。予約操作はKaraokeLocal本体から行ってください。</div>`
+      :`<h2 id="folderDetailTitle">楽曲DB未紐づけ動画</h2><div class="web-folder-detail-note">ファイル名から動画を確認できます。</div>`}`;
+    detailModal.hidden=false;
+  }
+  function activateSelected(){
+    const item=selectedItem();if(!item)return;
+    if(item.type==='root'){loadFolder(item.root_id,'');return}
+    if(item.type==='folder'){loadFolder(rootId,childPath(item.name));return}
+    if(item.type==='video')showVideoDetail(item);
+  }
+  function goBack(){
+    if(rootId===''){location.hash='#top';return}
+    if(!currentPath){loadFolder('','');return}
+    const parts=currentPath.split('/').filter(Boolean);parts.pop();loadFolder(rootId,parts.join('/'));
+  }
+  function moveSelection(delta){
+    if(!visibleItems.length)return;
+    selectedIndex=(selectedIndex+delta+visibleItems.length)%visibleItems.length;updateSelection();
+  }
+  function toggleEdit(force){
+    const open=typeof force==='boolean'?force:editPanel.hidden;editPanel.hidden=!open;
+    editToggle.setAttribute('aria-expanded',open?'true':'false');if(open)setTimeout(()=>filterText.focus(),0);
+  }
+
+  document.querySelectorAll('[data-folder-action]').forEach(b=>b.onclick=()=>{
+    const a=b.dataset.folderAction;
+    if(a==='up')moveSelection(-1);else if(a==='down')moveSelection(1);else if(a==='back')goBack();
+    else if(a==='open')activateSelected();else if(a==='top')location.hash='#top';
+  });
+  editToggle.onclick=()=>toggleEdit();
+  filterText.oninput=()=>{selectedIndex=0;applyView()};
+  sortMode.onchange=()=>{selectedIndex=0;applyView()};
+  fileList.addEventListener('scroll',updateChrome,{passive:true});
+  document.getElementById('folderDetailClose').onclick=closeDetail;
+  detailModal.onclick=e=>{if(e.target===detailModal)closeDetail()};
+  document.onkeydown=e=>{
+    if(detailModal&&!detailModal.hidden){if(e.key==='Escape'){e.preventDefault();closeDetail()}return}
+    if(document.activeElement===filterText){if(e.key==='Escape'){e.preventDefault();toggleEdit(false)}return}
+    if(e.key==='ArrowUp'){e.preventDefault();moveSelection(-1)}
+    else if(e.key==='ArrowDown'){e.preventDefault();moveSelection(1)}
+    else if(e.key==='ArrowLeft'||e.key==='Backspace'){e.preventDefault();goBack()}
+    else if(e.key==='ArrowRight'||e.key==='Enter'){e.preventDefault();activateSelected()}
+    else if(e.key==='Escape'){e.preventDefault();goBack()}
+  };
+  loadFolder();
+}
+
 function renderAll(){document.title='ITSUKI - 全曲一覧';pageShell(`${topNav()}<header class="browse-header"><div class="browse-icon">📚</div><div><div class="browse-title">全曲一覧</div><div class="browse-note">選曲可能な${nf(DATA.song_count)}曲</div></div></header><main id="browseResults" class="browse-results"></main>`,'browse-page');renderSongList(document.getElementById('browseResults'),DATA.songs,'',500)}
 
 function renderForeign(){const counts=new Map();for(const s of DATA.songs)for(const l of (s.languages||[]))counts.set(l,(counts.get(l)||0)+1);const langs=[...counts.entries()].sort((a,b)=>a[0].localeCompare(b[0],'ja'));document.title='ITSUKI - 外国曲';pageShell(`${topNav()}<header class="browse-header"><div class="browse-icon">🌐</div><div><div class="browse-title">外国曲</div><div class="browse-note">言語を選択して曲一覧を表示</div></div></header><div id="entityHeader" class="browse-entity-header" style="display:none"></div><main id="browseResults" class="browse-results"><div class="web-language-grid">${langs.map(([l,c])=>`<button class="web-language-btn" data-lang="${esc(l)}"><img src="./assets/flags/${flagPath(l)}" alt=""><strong>${esc(l)}</strong><small>${nf(c)}曲</small></button>`).join('')}</div></main>`,'browse-page');const root=document.getElementById('browseResults'),head=document.getElementById('entityHeader');root.querySelectorAll('[data-lang]').forEach(b=>b.onclick=()=>{const l=b.dataset.lang;head.style.display='flex';head.innerHTML=`<button type="button">← 言語一覧へ</button><strong>${esc(l)}</strong>`;head.querySelector('button').onclick=renderForeign;renderSongList(root,DATA.songs.filter(s=>(s.languages||[]).includes(l)))})}
@@ -131,7 +330,7 @@ function renderEra(){document.title='ITSUKI - あの頃・この頃';const curre
 function isoWeek(ts){const d=new Date(ts*1000);const x=new Date(Date.UTC(d.getUTCFullYear(),d.getUTCMonth(),d.getUTCDate()));const day=x.getUTCDay()||7;x.setUTCDate(x.getUTCDate()+4-day);const yearStart=new Date(Date.UTC(x.getUTCFullYear(),0,1));const week=Math.ceil((((x-yearStart)/86400000)+1)/7);return `${x.getUTCFullYear()}-W${String(week).padStart(2,'0')}`}
 function renderUpdates(){document.title='ITSUKI - 新曲・更新曲';const days=Number(DATA.new_update_days||15),cut=Math.floor(Date.now()/1000)-days*86400;const list=DATA.songs.filter(s=>Number(s.updated_at||0)>=cut).sort((a,b)=>Number(b.updated_at)-Number(a.updated_at));const groups=new Map();for(const s of list){const k=isoWeek(s.updated_at);if(!groups.has(k))groups.set(k,[]);groups.get(k).push(s)};pageShell(`${topNav()}<div class="updates-head"><div><div class="big">✨ 新曲・更新曲</div><div class="muted">直近${days}日間 / ${nf(list.length)}曲</div></div></div><main id="updatesResults"></main>`,'updates-page');const root=document.getElementById('updatesResults');if(!list.length){root.innerHTML='<div class="card"><span class="muted">指定期間内の新曲・更新曲はありません</span></div>';return}root.innerHTML=[...groups.entries()].map(([k,items])=>`<section class="update-group"><div class="update-group-title">${esc(k)}</div><div class="update-group-list">${items.map(songRow).join('')}</div></section>`).join('')}
 
-function route(){const h=(location.hash||'#top').replace(/^#/,'');const [a,b]=h.split('/');if(a==='top'||!a)return renderTop();if(a==='search')return renderSearch(b||'title');if(a==='feature')return renderFeature(b);if(a==='all')return renderAll();if(a==='foreign')return renderForeign();if(a==='tieup')return renderTieup();if(a==='era')return renderEra();if(a==='updates')return renderUpdates();renderTop()}
+function route(){document.onkeydown=null;const h=(location.hash||'#top').replace(/^#/,'');const [a,b]=h.split('/');if(a==='top'||!a)return renderTop();if(a==='search')return renderSearch(b||'title');if(a==='feature')return renderFeature(b);if(a==='folder')return renderFolderBrowser();if(a==='all')return renderAll();if(a==='foreign')return renderForeign();if(a==='tieup')return renderTieup();if(a==='era')return renderEra();if(a==='updates')return renderUpdates();renderTop()}
 
 async function init(){
   try{
