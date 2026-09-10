@@ -11,6 +11,20 @@ function vals(s){return (s??'').toString().split(/[,;\/／、；|\n]+/).map(x=>x
 function hira(s){return (s??'').toString().replace(/[ァ-ヶ]/g,ch=>String.fromCharCode(ch.charCodeAt(0)-0x60))}
 function kanaBucket(s){const t=hira((s??'').toString().trim());if(!t)return'他';const c=t[0];const gs={あ:'あいうえおぁぃぅぇぉゔ',か:'かきくけこがぎぐげご',さ:'さしすせそざじずぜぞ',た:'たちつてとだぢづでどっ',な:'なにぬねの',は:'はひふへほばびぶべぼぱぴぷぺぽ',ま:'まみむめも',や:'やゆよゃゅょ',ら:'らりるれろ',わ:'わをんゎ'};for(const [k,v] of Object.entries(gs))if(v.includes(c))return k;return'他'}
 function flagPath(lang){return ({英語:'gb',北京語:'cn',広東語:'cn',中国語:'cn',ドイツ語:'de',スウェーデン語:'se'}[lang]||'globe')+'.svg'}
+function topLinkShade(hex,amount=-34){
+  const m=/^#([0-9a-f]{6})$/i.exec(String(hex||''));if(!m)return '#315bc1';
+  const n=parseInt(m[1],16),clamp=x=>Math.max(0,Math.min(255,x));
+  const r=clamp((n>>16)+amount),g=clamp(((n>>8)&255)+amount),b=clamp((n&255)+amount);
+  return '#'+[r,g,b].map(x=>x.toString(16).padStart(2,'0')).join('');
+}
+function topCustomLinksHtml(items){
+  const links=(Array.isArray(items)?items:[]).filter(x=>x&&x.url&&x.label);
+  if(!links.length)return '';
+  return `<div class="top-custom-grid">${links.map(x=>{
+    const color=/^#[0-9a-f]{6}$/i.test(x.color||'')?x.color:'#4f8cff';
+    return `<a class="category-btn top-custom-btn" href="${esc(x.url)}" target="_blank" rel="noopener noreferrer" style="background:linear-gradient(180deg,${color},${topLinkShade(color)})">${x.emoji?`<span class="category-icon">${esc(x.emoji)}</span>`:''}<span>${esc(x.label)}</span></a>`;
+  }).join('')}</div>`;
+}
 
 let DATA=null;
 const app=document.getElementById('app');
@@ -64,6 +78,7 @@ function renderTop(){
           <a class="category-btn top-middle-btn c-purple" href="#foreign"><span class="category-icon">🌐</span><span>外国曲</span></a>
           <a class="category-btn top-middle-btn c-blue" href="#all"><span class="category-icon">📚</span><span>全曲一覧</span></a>
         </div>
+        ${topCustomLinksHtml(DATA.home_links)}
       </section>
     </div>`);
 }
