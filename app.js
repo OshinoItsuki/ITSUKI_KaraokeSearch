@@ -225,6 +225,7 @@ function renderSearch(initialMode='title',directPerson='',directRole=''){
   function closeRelations(){relationsBox.style.display='none'}
   function openPerson(name,preferredRole='',navigation='forward'){
     const p=pmap.get(norm(name));if(!p){results.innerHTML='<div class="denmoku-empty">人物情報が見つかりませんでした</div>';return}
+    const relationsWereOpen=relationsBox.style.display==='block';
     const previousName=selectedEntity,previousRole=selectedRole;if(navigation==='forward'&&previousName&&norm(previousName)!==norm(name))personTrail.push({name:previousName,role:previousRole||''});
     currentMode='person';selectedEntity=p.name;selectedRoleCounts=roleCounts(p);selectedRelations=(p.related||[]).filter(x=>pmap.has(norm(x.name)));selectedRole=(preferredRole&&selectedRoleCounts[preferredRole]>0)?preferredRole:roleOrder.find(r=>selectedRoleCounts[r]>0)||'artist';
     personOptions.style.display='none';fileOnlyPanel.style.display='none';header.style.display='flex';
@@ -232,6 +233,10 @@ function renderSearch(initialMode='title',directPerson='',directRole=''){
     header.innerHTML=`<div class="denmoku-entity-nav">${previousButton}<button type="button" id="entityBack">${backLabel}</button></div><div class="denmoku-person-head"><strong>人物：${esc(p.name)}</strong><button type="button" id="relationToggle" class="denmoku-relation-toggle" style="display:none">別名義・グループ</button></div>`;
     header.querySelector('#entityBack').onclick=backToPersonSearch;const pb=header.querySelector('#personBack');if(pb)pb.onclick=backToPreviousPerson;
     const toggle=header.querySelector('#relationToggle');if(selectedRelations.length){toggle.style.display='inline-flex';toggle.textContent=`別名義・グループ ${selectedRelations.length}`;toggle.onclick=()=>relationsBox.style.display==='block'?closeRelations():renderPersonRelations()}
+    // 人物を関連リンクから辿ったとき、開いたままの所属パネルも
+    // 新しい人物の直接リレーションへ即時更新する。
+    // 旧実装では selectedRelations だけ更新され、DOMが前の人物のまま残っていた。
+    if(relationsWereOpen)renderPersonRelations();else{relationsBox.style.display='none';relationsBox.innerHTML=''}
     renderRoleTabs(selectedRoleCounts,selectedRole);modeGuide.textContent=`${p.name} が関わる曲を担当区分ごとに表示します`;hit.textContent=String(selectedRoleCounts[selectedRole]||0);renderSongList(results,songsForIds(p.roles?.[selectedRole]||[]));
   }
   function loadPersonRole(role){const p=pmap.get(norm(selectedEntity));if(!p||Number(selectedRoleCounts[role]||0)<=0)return;selectedRole=role;closeRelations();renderRoleTabs(selectedRoleCounts,role);hit.textContent=String(selectedRoleCounts[role]||0);renderSongList(results,songsForIds(p.roles?.[role]||[]))}
