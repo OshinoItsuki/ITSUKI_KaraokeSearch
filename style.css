@@ -1078,6 +1078,8 @@ button:disabled{opacity:.45;cursor:not-allowed}
 .web-language-btn small{color:#aaa}
 .web-browse-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
 .web-browse-grid .denmoku-entity-row{min-height:64px}
+.web-entity-sub{display:inline-block;margin-left:.55em;color:#aaa;font-size:12px;font-weight:700;vertical-align:baseline}
+
 .web-era-controls{display:grid;gap:14px}
 .web-era-mode{display:grid;grid-template-columns:1fr 1fr;gap:6px}
 .web-era-mode button.active{background:linear-gradient(180deg,#5f3b8c,#30295d);color:#fff;border:1px solid #a888e2}
@@ -1162,3 +1164,25 @@ button:disabled{opacity:.45;cursor:not-allowed}
   .web-detail-artist-links .web-detail-entity-link{font-size:17px;padding:4px 6px}
 }
 
+/* v1.0.11+ unified person search */
+.denmoku-role-tab{display:flex;align-items:center;justify-content:center;gap:8px}
+.denmoku-role-tab small{display:inline-flex;min-width:24px;height:22px;padding:0 6px;border-radius:11px;align-items:center;justify-content:center;background:rgba(255,255,255,.15);font-size:12px;line-height:1}
+.denmoku-tabs button:disabled{cursor:default;color:#777;background:linear-gradient(180deg,#242424,#171717);border-color:#3a3a3a;border-bottom-color:#333;box-shadow:none;opacity:.72}
+.denmoku-tabs button:disabled small{background:#292929;color:#777}
+.denmoku-person-role-summary{display:block;margin-top:5px;color:#aaa;font-size:12px;font-weight:700}
+.denmoku-entity-nav{display:flex;align-items:center;gap:8px;min-width:0;flex-wrap:wrap}
+.denmoku-person-back{background:linear-gradient(180deg,#5e2d62,#341738)!important;border-color:#96569c!important;font-weight:800}
+.denmoku-person-head{display:flex;align-items:center;justify-content:flex-end;gap:10px;min-width:0}
+.denmoku-person-head strong{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.denmoku-relation-toggle{display:inline-flex;align-items:center;justify-content:center;background:linear-gradient(180deg,#743774,#432044)!important;border:1px solid #a85cab!important;color:#fff!important;font-weight:800;white-space:nowrap}
+.denmoku-person-relations{background:#100d12;border-bottom:1px solid #3b2b3e;padding:10px 12px}
+.denmoku-relations-title{font-size:14px;font-weight:900;color:#e8c1e6;margin-bottom:8px}
+.denmoku-relations-list{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:7px}
+.denmoku-related-person{min-height:48px;border:1px solid #4b3a4d;border-radius:8px;background:linear-gradient(180deg,#29232a,#181619);color:#fff;padding:8px 12px;text-align:left;display:flex;align-items:center;justify-content:space-between;gap:10px;font-size:16px;font-weight:800}
+.denmoku-related-person small{color:#ffb7d1;font-size:12px;white-space:nowrap}
+@media(max-width:700px){
+  .denmoku-entity-nav{width:100%}.denmoku-entity-nav button{flex:1 1 auto}
+  .denmoku-role-tab{gap:4px;flex-direction:column}.denmoku-role-tab small{height:18px;min-width:20px;font-size:10px}
+  .denmoku-person-head{width:100%;justify-content:space-between}.denmoku-person-head strong{max-width:55vw}.denmoku-relation-toggle{font-size:12px;padding:7px 8px!important}
+  .denmoku-relations-list{grid-template-columns:1fr}
+}
