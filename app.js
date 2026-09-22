@@ -544,7 +544,12 @@ function renderSongDetail(songId){
       ${song.song_ruby?`<div class="web-detail-ruby">${esc(song.song_ruby)}</div>`:''}
       <div class="reserve-song-line reserve-artist-row"><div class="reserve-song-icon reserve-person-icon" aria-hidden="true"></div><div class="web-detail-artist-links">${detailLinkList('artist',artistLinks)}</div></div>
       <div class="reserve-core-grid">
-        <div class="reserve-core-cell"><span>公開動画</span><strong>${nf(song.video_count)}本</strong></div>
+        <div class="reserve-core-cell web-video-path-cell">
+          <details class="web-video-paths">
+            <summary><span>公開動画</span><strong>${nf(song.video_count)}本</strong><span class="web-video-path-arrow" aria-hidden="true">⌄</span></summary>
+            <div class="web-video-path-list">${(song.video_paths||[]).length?(song.video_paths||[]).map(p=>`<div class="web-video-path-item">🎬 ${esc(p)}</div>`).join(''):'<div class="web-video-path-empty">公開フォルダ内の相対パス情報はありません。</div>'}</div>
+          </details>
+        </div>
         <div class="reserve-core-cell reserve-year-cell"><span>リリース年</span><strong>${song.release_year?`<a class="web-detail-year-link" href="${entityHref('year',song.release_year)}">${esc(song.release_year)}年 ›</a>`:'―'}</strong></div>
       </div>
       <div class="reserve-detail-grid">
