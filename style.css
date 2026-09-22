@@ -1187,11 +1187,11 @@ button:disabled{opacity:.45;cursor:not-allowed}
   .denmoku-relations-list{grid-template-columns:1fr}
 }
 
-/* v0.4.3 expandable public-video relative paths -------------------------- */
-.web-video-path-cell{padding:0!important;overflow:hidden}
-.web-video-paths{width:100%;height:100%}
+/* v0.4.4 expandable public-video relative paths -------------------------- */
+.web-video-path-cell{padding:0!important;overflow:visible;align-self:stretch}
+.web-video-paths{width:100%;min-height:100%}
 .web-video-paths>summary{
-  list-style:none;min-height:100%;padding:10px 12px;display:grid;
+  list-style:none;min-height:68px;box-sizing:border-box;padding:10px 12px;display:grid;
   grid-template-columns:minmax(0,1fr) auto;grid-template-rows:auto auto;column-gap:8px;align-items:center;
   cursor:pointer;user-select:none
 }
@@ -1209,5 +1209,5 @@ button:disabled{opacity:.45;cursor:not-allowed}
 .web-video-path-empty{padding:7px 9px;color:#8f8497;font-size:12px;line-height:1.45}
 .web-video-paths>summary:hover{filter:brightness(1.12)}
 @media(max-width:600px){
-  .web-video-paths>summary{padding:10px}.web-video-path-list{padding:7px 8px 9px}.web-video-path-item{font-size:11px}
+  .web-video-paths>summary{min-height:58px;padding:10px}.web-video-path-list{padding:7px 8px 9px}.web-video-path-item{font-size:11px}
 }
