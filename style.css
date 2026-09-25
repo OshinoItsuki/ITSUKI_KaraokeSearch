@@ -1180,6 +1180,8 @@ button:disabled{opacity:.45;cursor:not-allowed}
 .denmoku-relations-list{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:7px}
 .denmoku-related-person{min-height:48px;border:1px solid #4b3a4d;border-radius:8px;background:linear-gradient(180deg,#29232a,#181619);color:#fff;padding:8px 12px;text-align:left;display:flex;align-items:center;justify-content:space-between;gap:10px;font-size:16px;font-weight:800}
 .denmoku-related-person small{color:#ffb7d1;font-size:12px;white-space:nowrap}
+.denmoku-related-person:disabled,.denmoku-related-person.is-disabled{opacity:.48;filter:grayscale(.65);cursor:not-allowed;border-color:#413943;background:linear-gradient(180deg,#211e22,#171517);color:#aaa}
+.denmoku-related-person:disabled small,.denmoku-related-person.is-disabled small{color:#9e8b92}
 @media(max-width:700px){
   .denmoku-entity-nav{width:100%}.denmoku-entity-nav button{flex:1 1 auto}
   .denmoku-role-tab{gap:4px;flex-direction:column}.denmoku-role-tab small{height:18px;min-width:20px;font-size:10px}

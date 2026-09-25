@@ -220,14 +220,14 @@ function renderSearch(initialMode='title',directPerson='',directRole=''){
   function renderPersonRelations(){
     if(!selectedEntity||!selectedRelations.length){relationsBox.style.display='none';relationsBox.innerHTML='';return}
     relationsBox.innerHTML='<div class="denmoku-relations-title">別名義・グループ</div><div class="denmoku-relations-list"></div>';const list=relationsBox.querySelector('.denmoku-relations-list');
-    for(const x of selectedRelations){const b=document.createElement('button');b.type='button';b.className='denmoku-related-person';b.innerHTML=`<span>${esc(x.name)}</span><small>${esc(x.relation||'関連人物')}</small>`;b.onclick=()=>openPerson(x.name,'','forward');list.appendChild(b)}relationsBox.style.display='block';
+    for(const x of selectedRelations){const b=document.createElement('button');b.type='button';b.className='denmoku-related-person';const enabled=x.enabled!==false&&pmap.has(norm(x.name));b.innerHTML=`<span>${esc(x.name)}</span><small>${esc(x.relation||'関連人物')}</small>`;if(enabled){b.onclick=()=>openPerson(x.name,'','forward')}else{b.disabled=true;b.classList.add('is-disabled');b.title='DBには登録されていますが、公開対象の曲がありません'}list.appendChild(b)}relationsBox.style.display='block';
   }
   function closeRelations(){relationsBox.style.display='none'}
   function openPerson(name,preferredRole='',navigation='forward'){
     const p=pmap.get(norm(name));if(!p){results.innerHTML='<div class="denmoku-empty">人物情報が見つかりませんでした</div>';return}
     const relationsWereOpen=relationsBox.style.display==='block';
     const previousName=selectedEntity,previousRole=selectedRole;if(navigation==='forward'&&previousName&&norm(previousName)!==norm(name))personTrail.push({name:previousName,role:previousRole||''});
-    currentMode='person';selectedEntity=p.name;selectedRoleCounts=roleCounts(p);selectedRelations=(p.related||[]).filter(x=>pmap.has(norm(x.name)));selectedRole=(preferredRole&&selectedRoleCounts[preferredRole]>0)?preferredRole:roleOrder.find(r=>selectedRoleCounts[r]>0)||'artist';
+    currentMode='person';selectedEntity=p.name;selectedRoleCounts=roleCounts(p);selectedRelations=(p.related||[]);selectedRole=(preferredRole&&selectedRoleCounts[preferredRole]>0)?preferredRole:roleOrder.find(r=>selectedRoleCounts[r]>0)||'artist';
     personOptions.style.display='none';fileOnlyPanel.style.display='none';header.style.display='flex';
     const backLabel=lastEntityQuery?`← ${esc(lastEntityQuery)} の検索結果`:'← 人物検索へ';const previous=personTrail.length?personTrail[personTrail.length-1]:null;const previousButton=previous?`<button type="button" id="personBack" class="denmoku-person-back">← ${esc(previous.name)} に戻る</button>`:'';
     header.innerHTML=`<div class="denmoku-entity-nav">${previousButton}<button type="button" id="entityBack">${backLabel}</button></div><div class="denmoku-person-head"><strong>人物：${esc(p.name)}</strong><button type="button" id="relationToggle" class="denmoku-relation-toggle" style="display:none">別名義・グループ</button></div>`;
@@ -271,12 +271,13 @@ function renderSearch(initialMode='title',directPerson='',directRole=''){
 }
 
 const featureDefs={
-  'mv-pv':['mv_pv','🎬','MV・PV','MV / PVタグが付いた曲を歌手名から選択'],
-  'live':['live','🎙️','LIVEカラオケ','LIVEタグが付いた曲を歌手名から選択'],
-  'anime':['anime','📺','アニメ・ゲーム映像','MADタグ＋アニメ・ゲーム系タイアップから選択'],
-  'parts':['parts','👥','パート分け','キーワード「パート分け」の曲を歌手名から選択']
+  'mv-pv':['mv_pv','🎬','MV・PV'],
+  'live':['live','🎙️','LIVEカラオケ'],
+  'anime':['anime','📺','アニメ・ゲーム映像'],
+  'parts':['parts','👥','パート分け']
 };
-function renderFeature(slug){const d=featureDefs[slug]||featureDefs['mv-pv'];const rows=DATA.songs.filter(s=>s.features&&s.features[d[0]]);document.title='ITSUKI - '+d[2];pageShell(`${topNav()}<header class="browse-header"><div class="browse-icon">${d[1]}</div><div><div class="browse-title">${d[2]}</div><div class="browse-note">${d[3]}</div></div></header><div id="entityHeader" class="browse-entity-header" style="display:none"></div><main id="browseResults" class="browse-results"></main>`,'browse-page');const root=document.getElementById('browseResults'),head=document.getElementById('entityHeader');const map=new Map();for(const s of rows){const name=(s.artists||'歌手情報なし').trim();const key=norm(name);if(!map.has(key))map.set(key,{key,name,count:0,ids:new Set()});const e=map.get(key);e.ids.add(s.id);e.count=e.ids.size}const list=[...map.values()].sort((a,b)=>a.name.localeCompare(b.name,'ja'));root.innerHTML=entityRows(list);bindEntityClicks(root,list,x=>{head.style.display='flex';head.innerHTML=`<button type="button">← 歌手一覧へ</button><strong>${esc(x.name)}</strong>`;head.querySelector('button').onclick=()=>renderFeature(slug);renderSongList(root,rows.filter(s=>norm(s.artists)===x.key))})}
+function featureRuleNote(key){const labels=(DATA.feature_tag_rules&&Array.isArray(DATA.feature_tag_rules[key]))?DATA.feature_tag_rules[key].filter(Boolean):[];return labels.length?`設定タグ「${labels.map(esc).join(' / ')}」のいずれかが付いた曲を歌手名から選択`:'設定された楽曲タグに一致する曲を歌手名から選択'}
+function renderFeature(slug){const d=featureDefs[slug]||featureDefs['mv-pv'];const rows=DATA.songs.filter(s=>s.features&&s.features[d[0]]);document.title='ITSUKI - '+d[2];pageShell(`${topNav()}<header class="browse-header"><div class="browse-icon">${d[1]}</div><div><div class="browse-title">${d[2]}</div><div class="browse-note">${featureRuleNote(d[0])}</div></div></header><div id="entityHeader" class="browse-entity-header" style="display:none"></div><main id="browseResults" class="browse-results"></main>`,'browse-page');const root=document.getElementById('browseResults'),head=document.getElementById('entityHeader');const map=new Map();for(const s of rows){const name=(s.artists||'歌手情報なし').trim();const key=norm(name);if(!map.has(key))map.set(key,{key,name,count:0,ids:new Set()});const e=map.get(key);e.ids.add(s.id);e.count=e.ids.size}const list=[...map.values()].sort((a,b)=>a.name.localeCompare(b.name,'ja'));root.innerHTML=entityRows(list);bindEntityClicks(root,list,x=>{head.style.display='flex';head.innerHTML=`<button type="button">← 歌手一覧へ</button><strong>${esc(x.name)}</strong>`;head.querySelector('button').onclick=()=>renderFeature(slug);renderSongList(root,rows.filter(s=>norm(s.artists)===x.key))})}
 
 
 function renderFolderBrowser(){
