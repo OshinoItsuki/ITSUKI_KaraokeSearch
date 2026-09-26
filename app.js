@@ -684,7 +684,96 @@ function updateWeekInfo(ts){
     :`W${String(week).padStart(2,'0')}(${start.getFullYear()}年${start.getMonth()+1}月${start.getDate()}日～${end.getFullYear()}年${end.getMonth()+1}月${end.getDate()}日)更新分`;
   return {key,week,label};
 }
-function renderUpdates(){document.title='ITSUKI - 新曲・更新曲';const days=Math.max(1,Math.min(60,Number(DATA.new_update_days||15)||15)),now=new Date(),todayStart=Math.floor(new Date(now.getFullYear(),now.getMonth(),now.getDate()).getTime()/1000),cut=todayStart-(days-1)*86400;const list=DATA.songs.filter(s=>Number(s.updated_at||0)>=cut).sort((a,b)=>Number(b.updated_at)-Number(a.updated_at));const groups=new Map();for(const s of list){const info=updateWeekInfo(s.updated_at);if(!groups.has(info.key))groups.set(info.key,{...info,items:[]});groups.get(info.key).items.push(s)};pageShell(`${topNav()}<div class="updates-head"><div><div class="big">✨ 新曲・更新曲</div><div class="muted">直近${days}日間 / ${nf(list.length)}曲</div></div></div><main id="updatesResults"></main>`,'updates-page');const root=document.getElementById('updatesResults');if(!list.length){root.innerHTML='<div class="card"><span class="muted">指定期間内の新曲・更新曲はありません</span></div>';return}root.innerHTML=[...groups.values()].map(g=>`<section class="update-group"><div class="update-group-title">${esc(g.label)}</div><div class="update-group-list">${g.items.map(songRow).join('')}</div></section>`).join('')}
+function updateVideoRow(v){
+  const linked=!!(v.song_id&&v.song_name);
+  const title=linked?v.song_name:(v.filename||'名称不明の動画');
+  const artist=linked?(v.artists||'歌手情報なし'):'DB未紐づけ';
+  const meta=linked&&v.tie_up?`<div class="update-meta">${esc(v.tie_up)}</div>`:'';
+  const file=v.rel_path||v.filename||'';
+  const vocal=v.vocal_label?` <span class="muted">(${esc(v.vocal_label)})</span>`:'';
+  const action=linked?`<div class="update-action"><a class="web-update-detail-btn" href="#song/${encodeURIComponent(v.song_id)}">曲詳細</a></div>`:'';
+  return `<article class="update-video-row"><div class="update-video-main"><div class="update-song-title">${esc(title)}</div><div class="update-artist">${esc(artist)}${vocal}</div>${meta}<div class="update-file">${esc(file)}</div></div>${action}</article>`;
+}
+function renderUpdates(){
+  document.title='ITSUKI - 新曲・更新曲';
+  const days=Math.max(1,Math.min(60,Number(DATA.new_update_days||15)||15));
+  const now=new Date();
+  const todayStart=Math.floor(new Date(now.getFullYear(),now.getMonth(),now.getDate()).getTime()/1000);
+  const cut=todayStart-(days-1)*86400;
+  const source=Array.isArray(DATA.new_update_videos)
+    ?DATA.new_update_videos
+    :(DATA.songs||[]).map(s=>({...s,update_at:Number(s.updated_at||0),filename:'',rel_path:'',song_id:s.id}));
+  const list=source.filter(v=>Number(v.update_at||0)>=cut).sort((a,b)=>Number(b.update_at||0)-Number(a.update_at||0));
+  const byWeek=new Map();
+  for(const v of list){
+    const info=updateWeekInfo(v.update_at);
+    if(!byWeek.has(info.key))byWeek.set(info.key,{...info,items:[]});
+    byWeek.get(info.key).items.push(v);
+  }
+  const groups=[...byWeek.values()].sort((a,b)=>b.key.localeCompare(a.key));
+  let currentWeekIndex=0;
+  let weekViewport=null;
+  pageShell(`${topNav()}<div class="updates-head"><div><div class="big">✨ 新曲・更新曲</div><div id="periodText" class="muted"></div></div></div><nav id="weekNav" class="updates-week-nav" aria-label="更新週を選択" hidden></nav><main id="updatesResults"></main>`,'updates-page');
+  const root=document.getElementById('updatesResults'),period=document.getElementById('periodText'),nav=document.getElementById('weekNav');
+
+  function updateWeekOverflowHints(){
+    if(!weekViewport)return;
+    const max=Math.max(0,weekViewport.scrollWidth-weekViewport.clientWidth);
+    weekViewport.classList.toggle('has-left',weekViewport.scrollLeft>4);
+    weekViewport.classList.toggle('has-right',weekViewport.scrollLeft<max-4);
+  }
+  function centerCurrentWeek(behavior='smooth'){
+    if(!weekViewport)return;
+    const chip=weekViewport.querySelector('.week-chip.active');
+    if(!chip)return;
+    const left=chip.offsetLeft-(weekViewport.clientWidth-chip.offsetWidth)/2;
+    weekViewport.scrollTo({left:Math.max(0,left),behavior});
+    window.setTimeout(updateWeekOverflowHints,behavior==='smooth'?260:0);
+  }
+  function renderWeekNav(){
+    if(!groups.length){nav.hidden=true;weekViewport=null;return}
+    nav.hidden=false;nav.innerHTML='';
+    const newer=document.createElement('button');
+    newer.type='button';newer.className='week-arrow';newer.textContent='◁';newer.title='新しい週へ';
+    newer.disabled=currentWeekIndex<=0;newer.onclick=()=>selectWeek(currentWeekIndex-1);nav.appendChild(newer);
+
+    weekViewport=document.createElement('div');weekViewport.className='week-viewport';
+    const strip=document.createElement('div');strip.className='week-strip';weekViewport.appendChild(strip);
+    groups.forEach((g,i)=>{
+      const b=document.createElement('button');b.type='button';b.className='week-chip'+(i===currentWeekIndex?' active':'');
+      b.textContent=`W${String(g.week).padStart(2,'0')}`;b.title=g.label;b.onclick=()=>selectWeek(i);strip.appendChild(b);
+    });
+    weekViewport.addEventListener('scroll',updateWeekOverflowHints,{passive:true});nav.appendChild(weekViewport);
+
+    const older=document.createElement('button');
+    older.type='button';older.className='week-arrow';older.textContent='▷';older.title='古い週へ';
+    older.disabled=currentWeekIndex>=groups.length-1;older.onclick=()=>selectWeek(currentWeekIndex+1);nav.appendChild(older);
+    requestAnimationFrame(()=>{centerCurrentWeek('auto');updateWeekOverflowHints()});
+  }
+  function renderCurrentWeek(){
+    root.innerHTML='';
+    if(!groups.length){
+      period.textContent=`直近${days}日間 / 0動画`;
+      root.innerHTML='<div class="card"><span class="muted">指定期間内に追加・作成・更新された動画はありません</span></div>';
+      renderWeekNav();return;
+    }
+    currentWeekIndex=Math.max(0,Math.min(currentWeekIndex,groups.length-1));
+    const g=groups[currentWeekIndex];
+    const items=[...(g.items||[])].sort((a,b)=>{
+      const an=norm(a.song_name||String(a.filename||'').replace(/\.[^.]+$/,''));
+      const bn=norm(b.song_name||String(b.filename||'').replace(/\.[^.]+$/,''));
+      return an.localeCompare(bn,'ja')||norm(a.filename||'').localeCompare(norm(b.filename||''),'ja');
+    });
+    period.textContent=`${g.label} / ${nf(items.length)}動画`;
+    root.innerHTML=`<section class="update-group single-week"><div class="update-group-title">${esc(g.label)}</div><div class="update-group-list">${items.map(updateVideoRow).join('')}</div></section>`;
+    renderWeekNav();
+  }
+  function selectWeek(index){
+    if(index<0||index>=groups.length)return;
+    currentWeekIndex=index;renderCurrentWeek();window.scrollTo({top:0,behavior:'smooth'});
+  }
+  renderCurrentWeek();
+}
 
 function route(){
   document.onkeydown=null;

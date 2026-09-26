@@ -510,6 +510,8 @@ button:disabled{opacity:.45;cursor:not-allowed}
 .update-meta{font-size:13px;color:#aaa;margin-top:3px}
 .update-file{font-size:12px;color:#777;margin-top:5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .update-action button{min-width:78px;background:#2c9d4d}
+.web-update-detail-btn{display:inline-flex;align-items:center;justify-content:center;min-width:78px;padding:9px 12px;border:1px solid #45bd68;border-radius:8px;background:#2c9d4d;color:#fff;text-decoration:none;font-weight:900}
+.web-update-detail-btn:hover{filter:brightness(1.12)}
 
 @media(max-width:720px){
   .denmoku-page{padding:0}.denmoku-toolbar{grid-template-columns:auto minmax(0,1fr);padding:6px}.denmoku-hit-btn{display:none}
