@@ -1213,3 +1213,23 @@ button:disabled{opacity:.45;cursor:not-allowed}
 @media(max-width:600px){
   .web-video-paths>summary{min-height:58px;padding:10px}.web-video-path-list{padding:7px 8px 9px}.web-video-path-item{font-size:11px}
 }
+
+/* v0.5.0 / KaraokeLocal v1.1.4 search + tie-up UI parity */
+.denmoku-song-row{grid-template-columns:auto minmax(0,1fr) auto}
+.web-list-feature-column{display:flex;flex-direction:column;gap:4px;align-items:stretch;justify-content:center;width:82px;min-width:82px}
+.web-list-feature-tag{display:flex;align-items:center;justify-content:center;width:82px;min-height:22px;padding:2px 5px;border-radius:5px;border:1px solid #5a4562;background:#2b2130;color:#fff;font-size:11px;font-weight:900;line-height:1.15;text-align:center;white-space:nowrap}
+.web-list-feature-tag.none{font-size:18px;color:#d6b5dc;background:#211b24;border-color:#403347}
+.web-list-feature-tag.anime{background:#263d37;border-color:#4f8c78}.web-list-feature-tag.tokusatsu{background:#4a3322;border-color:#9b673d}.web-list-feature-tag.live{background:#3c243f;border-color:#8e5694}.web-list-feature-tag.parts{background:#213c49;border-color:#487e92}
+.web-search-feature-filters{display:flex;align-items:center;gap:7px;flex-wrap:wrap;padding:8px 12px;background:#100d12;border-bottom:1px solid #3d314a}
+.web-search-feature-filters .web-filter-title{font-size:13px;font-weight:900;color:#d9bfdc;margin-right:2px}
+.web-search-feature-filters button{min-height:34px;padding:6px 10px;border:1px solid #514158;border-radius:7px;background:#242027;color:#d5cbd7;font-size:13px;font-weight:900}
+.web-search-feature-filters button.active{background:linear-gradient(180deg,#8c3988,#542458);border-color:#e677dc;color:#fff;box-shadow:inset 0 1px 0 rgba(255,255,255,.25)}
+.web-search-feature-filters small{color:#8f8791;font-size:11px;margin-left:auto}
+.web-tieup-sticky-filters{position:sticky;top:0;z-index:35;display:grid;gap:7px;padding:9px;background:rgba(8,7,10,.97);border:1px solid #493b50;border-radius:10px;backdrop-filter:blur(8px);margin-bottom:8px}
+.web-tieup-filter-block{display:grid;grid-template-columns:54px minmax(0,1fr);gap:7px;align-items:start}.web-tieup-filter-label{padding-top:8px;color:#cdbbd0;font-size:12px;font-weight:900}
+.web-tieup-detail-buttons,.web-tieup-kana-buttons{display:flex;gap:5px;flex-wrap:wrap}.web-tieup-detail-buttons button,.web-tieup-kana-buttons button{min-height:34px;padding:6px 12px;border:1px solid #514158;border-radius:8px;background:#242027;color:#fff;font-size:13px;font-weight:900}.web-tieup-detail-buttons button.active,.web-tieup-kana-buttons button.active{background:linear-gradient(180deg,#9a4295,#59275d);border-color:#ee8be5}
+.web-tieup-kana-buttons button{min-width:43px}.web-tieup-result-count{text-align:right;padding:2px 5px 7px;color:#aaa;font-size:12px;font-weight:800}
+@media(max-width:650px){.denmoku-song-row{grid-template-columns:64px minmax(0,1fr)}.web-list-feature-column{width:64px;min-width:64px}.web-list-feature-tag{width:64px;font-size:9px;padding:2px 3px}.web-song-count{grid-column:1/-1}.web-search-feature-filters{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:5px}.web-search-feature-filters .web-filter-title,.web-search-feature-filters small{grid-column:1/-1;margin:0}.web-search-feature-filters button{width:100%}.web-tieup-filter-block{grid-template-columns:1fr}.web-tieup-filter-label{padding-top:0}.web-tieup-detail-buttons{overflow-x:auto;flex-wrap:nowrap;padding-bottom:2px}.web-tieup-detail-buttons button{white-space:nowrap}.web-tieup-kana-buttons{display:grid;grid-template-columns:repeat(5,minmax(0,1fr))}.web-tieup-kana-buttons button{min-width:0;padding:6px 3px}}
+.browse-entity-header.web-tieup-sticky-head{position:sticky;top:0;z-index:42;background:rgba(22,22,22,.98);backdrop-filter:blur(8px)}
+.browse-entity-header.web-tieup-sticky-head + .browse-results .web-tieup-sticky-filters{top:58px}
+@media(max-width:650px){.browse-entity-header.web-tieup-sticky-head + .browse-results .web-tieup-sticky-filters{top:86px}}
