@@ -1235,3 +1235,14 @@ button:disabled{opacity:.45;cursor:not-allowed}
 .browse-entity-header.web-tieup-sticky-head{position:sticky;top:0;z-index:42;background:rgba(22,22,22,.98);backdrop-filter:blur(8px)}
 .browse-entity-header.web-tieup-sticky-head + .browse-results .web-tieup-sticky-filters{top:58px}
 @media(max-width:650px){.browse-entity-header.web-tieup-sticky-head + .browse-results .web-tieup-sticky-filters{top:86px}}
+
+/* v0.5.2 bounded numeric steppers for あの頃・この頃 ---------------------- */
+.web-era-range{margin:-3px 0 1px;color:#9fb4c9;font-size:12px;font-weight:800;text-align:right}
+.web-number-stepper{position:relative;display:flex;width:100%;min-width:0}
+.web-number-stepper input{width:100%;padding-right:44px!important;-moz-appearance:textfield}
+.web-number-stepper input::-webkit-outer-spin-button,.web-number-stepper input::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}
+.web-number-step-buttons{position:absolute;top:1px;right:1px;bottom:1px;width:38px;display:grid;grid-template-rows:1fr 1fr;border-left:1px solid #484b55;border-radius:0 5px 5px 0;overflow:hidden;background:#1c2026}
+.web-number-step-buttons button{min-width:0;min-height:0;padding:0;border:0;border-radius:0;background:linear-gradient(180deg,#3a414b,#252a31);color:#fff;font-size:11px;line-height:1;cursor:pointer}
+.web-number-step-buttons button+button{border-top:1px solid #4b515b}
+.web-number-step-buttons button:hover:not(:disabled){filter:brightness(1.22)}
+.web-number-step-buttons button:disabled{color:#60656c;background:#202328;cursor:default;opacity:.7}

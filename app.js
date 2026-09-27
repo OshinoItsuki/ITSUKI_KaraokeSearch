@@ -315,8 +315,59 @@ const featureDefs={
   'tokusatsu':['tokusatsu','⚡','特撮映像'],
   'parts':['parts','👥','パート分け']
 };
-function featureRuleNote(key){const labels=(DATA.feature_tag_rules&&Array.isArray(DATA.feature_tag_rules[key]))?DATA.feature_tag_rules[key].filter(Boolean):[];return labels.length?`設定タグ「${labels.map(esc).join(' / ')}」のいずれかが付いた曲を歌手名から選択`:'設定された楽曲タグに一致する曲を歌手名から選択'}
-function renderFeature(slug){const d=featureDefs[slug]||featureDefs['mv-pv'];const rows=DATA.songs.filter(s=>s.features&&s.features[d[0]]);document.title='ITSUKI - '+d[2];pageShell(`${topNav()}<header class="browse-header"><div class="browse-icon">${d[1]}</div><div><div class="browse-title">${d[2]}</div><div class="browse-note">${featureRuleNote(d[0])}</div></div></header><div id="entityHeader" class="browse-entity-header" style="display:none"></div><main id="browseResults" class="browse-results"></main>`,'browse-page');const root=document.getElementById('browseResults'),head=document.getElementById('entityHeader');const map=new Map();for(const s of rows){const name=(s.artists||'歌手情報なし').trim();const key=norm(name);if(!map.has(key))map.set(key,{key,name,count:0,ids:new Set()});const e=map.get(key);e.ids.add(s.id);e.count=e.ids.size}const list=[...map.values()].sort((a,b)=>a.name.localeCompare(b.name,'ja'));root.innerHTML=entityRows(list);bindEntityClicks(root,list,x=>{head.style.display='flex';head.innerHTML=`<button type="button">← 歌手一覧へ</button><strong>${esc(x.name)}</strong>`;head.querySelector('button').onclick=()=>renderFeature(slug);renderSongList(root,rows.filter(s=>norm(s.artists)===x.key))})}
+function featureRuleNote(key){
+  const labels=(DATA.feature_tag_rules&&Array.isArray(DATA.feature_tag_rules[key]))?DATA.feature_tag_rules[key].filter(Boolean):[];
+  const via=key==='anime'?'タイアップ作品':'歌手名';
+  return labels.length?`設定タグ「${labels.map(esc).join(' / ')}」のいずれかが付いた曲を${via}から選択`:`設定された楽曲タグに一致する曲を${via}から選択`;
+}
+function renderFeature(slug){
+  const d=featureDefs[slug]||featureDefs['mv-pv'];
+  const rows=DATA.songs.filter(s=>s.features&&s.features[d[0]]);
+  document.title='ITSUKI - '+d[2];
+  pageShell(`${topNav()}<header class="browse-header"><div class="browse-icon">${d[1]}</div><div><div class="browse-title">${d[2]}</div><div class="browse-note">${featureRuleNote(d[0])}</div></div></header><div id="entityHeader" class="browse-entity-header" style="display:none"></div><main id="browseResults" class="browse-results"></main>`,'browse-page');
+  const root=document.getElementById('browseResults'),head=document.getElementById('entityHeader');
+
+  // KaraokeLocalと同じく、アニメ・ゲーム映像だけは歌手ではなく
+  // タイアップ作品を入口にする。他の映像カテゴリは従来どおり歌手単位。
+  if(d[0]==='anime'){
+    const map=new Map();
+    for(const s of rows){
+      const raw=String(s.tie_up||'').trim();
+      const name=raw||'タイアップ情報なし';
+      const key=raw?norm(raw):'__no_tieup__';
+      if(!map.has(key))map.set(key,{key,name,ruby:String(s.tie_up_ruby||raw||name),count:0,ids:new Set()});
+      const e=map.get(key);e.ids.add(String(s.id));e.count=e.ids.size;
+      if(!e.ruby&&s.tie_up_ruby)e.ruby=String(s.tie_up_ruby);
+    }
+    const list=[...map.values()].sort((a,b)=>{
+      if(a.key==='__no_tieup__')return 1;if(b.key==='__no_tieup__')return -1;
+      return hira(a.ruby||a.name).localeCompare(hira(b.ruby||b.name),'ja');
+    });
+    root.innerHTML=entityRows(list);
+    bindEntityClicks(root,list,x=>{
+      head.style.display='flex';
+      head.innerHTML=`<button type="button">← タイアップ作品一覧へ</button><strong>${esc(x.name)}</strong>`;
+      head.querySelector('button').onclick=()=>renderFeature(slug);
+      const selected=rows.filter(s=>x.key==='__no_tieup__'?!String(s.tie_up||'').trim():norm(s.tie_up)===x.key);
+      renderSongList(root,selected);
+    });
+    return;
+  }
+
+  const map=new Map();
+  for(const s of rows){
+    const name=(s.artists||'歌手情報なし').trim();const key=norm(name);
+    if(!map.has(key))map.set(key,{key,name,count:0,ids:new Set()});
+    const e=map.get(key);e.ids.add(s.id);e.count=e.ids.size;
+  }
+  const list=[...map.values()].sort((a,b)=>a.name.localeCompare(b.name,'ja'));
+  root.innerHTML=entityRows(list);
+  bindEntityClicks(root,list,x=>{
+    head.style.display='flex';head.innerHTML=`<button type="button">← 歌手一覧へ</button><strong>${esc(x.name)}</strong>`;
+    head.querySelector('button').onclick=()=>renderFeature(slug);
+    renderSongList(root,rows.filter(s=>norm(s.artists)===x.key));
+  });
+}
 
 
 function renderFolderBrowser(){
@@ -668,8 +719,79 @@ function renderTieup(){
   rootView();
 }
 
-function renderEra(){document.title='ITSUKI - あの頃・この頃';const currentYear=new Date().getFullYear();const cats=new Map();for(const s of DATA.songs){const ids=vals(s.tie_up_category_id),names=vals(s.tie_up_category);ids.forEach((id,i)=>{if(id&&!cats.has(id))cats.set(id,names[i]||id)})}pageShell(`${topNav()}<div class="era-shell"><div class="era-head"><span>🕒</span><div><h1>あの頃・この頃</h1><p>年代から選曲できる曲を探します</p></div></div><div class="era-panel"><div class="web-era-controls"><div class="web-era-mode"><button id="modeYear" class="active">年から探す</button><button id="modeAge">年齢から探す</button></div><div class="web-era-fields"><label><span id="field1Label">西暦</span><input id="field1" type="number" value="${currentYear}" min="1901" max="2199"></label><label><span id="field2Label">ジャンル</span><select id="genre"><option value="">すべて</option>${[...cats].sort((a,b)=>a[0].localeCompare(b[0])).map(([id,name])=>`<option value="${esc(id)}">${esc(name)}</option>`).join('')}</select></label><label id="ageNowWrap" style="display:none"><span>現在の年齢</span><input id="ageNow" type="number" value="30" min="0" max="120"></label><label id="ageThenWrap" style="display:none"><span>当時の年齢</span><input id="ageThen" type="number" value="18" min="0" max="120"></label></div><button class="web-primary-btn" id="eraSearch">検索</button><div id="eraComputed" class="era-computed"></div></div></div></div><main id="eraResults" class="denmoku-results era-results"><div class="denmoku-empty">条件を指定して検索してください</div></main>`,'era-page');let mode='year';const fy=document.getElementById('field1'),genre=document.getElementById('genre'),res=document.getElementById('eraResults'),computed=document.getElementById('eraComputed');function sw(m){mode=m;document.getElementById('modeYear').classList.toggle('active',m==='year');document.getElementById('modeAge').classList.toggle('active',m==='age');document.getElementById('ageNowWrap').style.display=m==='age'?'grid':'none';document.getElementById('ageThenWrap').style.display=m==='age'?'grid':'none';fy.parentElement.style.display=m==='year'?'grid':'none'}document.getElementById('modeYear').onclick=()=>sw('year');document.getElementById('modeAge').onclick=()=>sw('age');document.getElementById('eraSearch').onclick=()=>{let year;if(mode==='year')year=Number(fy.value);else year=currentYear-Number(document.getElementById('ageNow').value)+Number(document.getElementById('ageThen').value);computed.textContent=`対象年：${year}年`;const g=genre.value;const list=DATA.songs.filter(s=>(String(s.release_year)===String(year)||String(s.tie_up_release_year)===String(year))&&(!g||vals(s.tie_up_category_id).includes(g)));renderSongList(res,list,`${year}年に該当する曲がありません`)} }
-
+function renderEra(){
+  document.title='ITSUKI - あの頃・この頃';
+  const currentYear=new Date().getFullYear();
+  const searchableYears=[];
+  for(const s of DATA.songs){
+    for(const raw of [s.release_year,s.tie_up_release_year]){
+      const y=Number(raw);if(Number.isInteger(y)&&y>=1901&&y<=2199)searchableYears.push(y);
+    }
+  }
+  const minYear=searchableYears.length?Math.min(...searchableYears):1901;
+  const maxYear=searchableYears.length?Math.max(...searchableYears):currentYear;
+  const initialYear=Math.min(maxYear,Math.max(minYear,currentYear));
+  const cats=new Map();
+  for(const s of DATA.songs){const ids=vals(s.tie_up_category_id),names=vals(s.tie_up_category);ids.forEach((id,i)=>{if(id&&!cats.has(id))cats.set(id,names[i]||id)})}
+  const numberStepper=(id,value,min,max,label)=>`<div class="web-number-stepper"><input id="${id}" type="number" inputmode="numeric" value="${value}" min="${min}" max="${max}" aria-label="${esc(label)}"><span class="web-number-step-buttons"><button type="button" data-step-target="${id}" data-step="1" aria-label="${esc(label)}を1増やす">▲</button><button type="button" data-step-target="${id}" data-step="-1" aria-label="${esc(label)}を1減らす">▼</button></span></div>`;
+  pageShell(`${topNav()}<div class="era-shell"><div class="era-head"><span>🕒</span><div><h1>あの頃・この頃</h1><p>年代から選曲できる曲を探します</p></div></div><div class="era-panel"><div class="web-era-controls"><div class="web-era-mode"><button id="modeYear" class="active">年から探す</button><button id="modeAge">年齢から探す</button></div><div class="web-era-range">検索可能：${minYear}年～${maxYear}年</div><div class="web-era-fields"><label><span id="field1Label">西暦</span>${numberStepper('field1',initialYear,minYear,maxYear,'西暦')}</label><label><span id="field2Label">ジャンル</span><select id="genre"><option value="">すべて</option>${[...cats].sort((a,b)=>a[0].localeCompare(b[0])).map(([id,name])=>`<option value="${esc(id)}">${esc(name)}</option>`).join('')}</select></label><label id="ageNowWrap" style="display:none"><span>現在の年齢</span>${numberStepper('ageNow',30,0,120,'現在の年齢')}</label><label id="ageThenWrap" style="display:none"><span>当時の年齢</span>${numberStepper('ageThen',18,0,120,'当時の年齢')}</label></div><button class="web-primary-btn" id="eraSearch">検索</button><div id="eraComputed" class="era-computed"></div></div></div></div><main id="eraResults" class="denmoku-results era-results"><div class="denmoku-empty">条件を指定して検索してください</div></main>`,'era-page');
+  let mode='year';
+  const fy=document.getElementById('field1'),genre=document.getElementById('genre'),res=document.getElementById('eraResults'),computed=document.getElementById('eraComputed');
+  const clamp=(n,min,max)=>Math.min(max,Math.max(min,Number.isFinite(n)?n:min));
+  function clampInput(input){
+    const min=Number(input.min),max=Number(input.max);let n=Number(input.value);
+    n=Math.round(clamp(n,min,max));input.value=String(n);return n;
+  }
+  function computedYear(){
+    if(mode==='year')return clampInput(fy);
+    const now=clampInput(document.getElementById('ageNow'));
+    const then=clampInput(document.getElementById('ageThen'));
+    return currentYear-now+then;
+  }
+  function refreshStepperButtons(){
+    const nowEl=document.getElementById('ageNow'),thenEl=document.getElementById('ageThen');
+    const targetYear=(nowEl&&thenEl)?currentYear-Number(nowEl.value||0)+Number(thenEl.value||0):currentYear;
+    document.querySelectorAll('.web-number-step-buttons button').forEach(btn=>{
+      const input=document.getElementById(btn.dataset.stepTarget);if(!input)return;
+      const step=Number(btn.dataset.step||0),value=Number(input.value),min=Number(input.min),max=Number(input.max);
+      let disabled=(step>0&&value>=max)||(step<0&&value<=min);
+      if(mode==='age'&&!disabled&&input.id==='ageNow'){const nextYear=targetYear-step;disabled=nextYear<minYear||nextYear>maxYear}
+      if(mode==='age'&&!disabled&&input.id==='ageThen'){const nextYear=targetYear+step;disabled=nextYear<minYear||nextYear>maxYear}
+      btn.disabled=disabled;
+    });
+  }
+  function keepAgeTargetSearchable(changedId){
+    if(mode!=='age')return;
+    const now=document.getElementById('ageNow'),then=document.getElementById('ageThen');
+    let n=clampInput(now),t=clampInput(then),year=currentYear-n+t;
+    if(year<minYear||year>maxYear){
+      const target=Math.min(maxYear,Math.max(minYear,year));
+      if(changedId==='ageThen')t=clamp(target-currentYear+n,0,120),then.value=String(Math.round(t));
+      else n=clamp(currentYear+t-target,0,120),now.value=String(Math.round(n));
+    }
+  }
+  function sw(m){
+    mode=m;document.getElementById('modeYear').classList.toggle('active',m==='year');document.getElementById('modeAge').classList.toggle('active',m==='age');document.getElementById('ageNowWrap').style.display=m==='age'?'grid':'none';document.getElementById('ageThenWrap').style.display=m==='age'?'grid':'none';fy.closest('label').style.display=m==='year'?'grid':'none';computed.textContent='';if(m==='age')keepAgeTargetSearchable('ageNow');refreshStepperButtons();
+  }
+  document.querySelectorAll('.web-number-step-buttons button').forEach(btn=>btn.onclick=()=>{
+    const input=document.getElementById(btn.dataset.stepTarget);if(!input)return;
+    input.value=String(clampInput(input)+Number(btn.dataset.step||0));clampInput(input);
+    keepAgeTargetSearchable(input.id);refreshStepperButtons();
+  });
+  document.querySelectorAll('.web-number-stepper input').forEach(input=>{
+    input.onchange=()=>{clampInput(input);keepAgeTargetSearchable(input.id);refreshStepperButtons()};
+    input.oninput=()=>refreshStepperButtons();
+  });
+  document.getElementById('modeYear').onclick=()=>sw('year');document.getElementById('modeAge').onclick=()=>sw('age');
+  document.getElementById('eraSearch').onclick=()=>{
+    let year=computedYear();
+    if(year<minYear||year>maxYear){year=Math.min(maxYear,Math.max(minYear,year));computed.textContent=`対象年：${year}年（検索可能範囲へ調整）`}
+    else computed.textContent=`対象年：${year}年`;
+    const g=genre.value;const list=DATA.songs.filter(s=>(String(s.release_year)===String(year)||String(s.tie_up_release_year)===String(year))&&(!g||vals(s.tie_up_category_id).includes(g)));
+    renderSongList(res,list,`${year}年に該当する曲がありません`);refreshStepperButtons();
+  };
+  refreshStepperButtons();
+}
 function isoWeekNumber(y,m,d){const x=new Date(Date.UTC(y,m,d));const day=x.getUTCDay()||7;x.setUTCDate(x.getUTCDate()+4-day);const yearStart=new Date(Date.UTC(x.getUTCFullYear(),0,1));return Math.ceil((((x-yearStart)/86400000)+1)/7)}
 function updateWeekInfo(ts){
   const d=new Date(Number(ts||0)*1000);
