@@ -36,12 +36,24 @@ function topNav(){return `<div class="top nav common-user-nav"><a class="navbtn"
 function pageShell(inner, cls='web-static-page'){app.innerHTML=`<div class="wrap ${cls}">${inner}${footer()}</div>`;window.scrollTo(0,0)}
 
 function tieUpDisplay(s){
-  const name=String(s?.tie_up||'').trim();if(!name)return '';
-  const fine=String(s?.tie_up_sub_category||'').trim();
-  const broad=categoryVals(s?.tie_up_category||'').filter(x=>x&&x!=='-').join(' / ');
-  const label=(fine&&fine!=='-')?fine:broad;
-  const type=String(s?.op_ed||'').trim();
-  return `${label?label+' ':''}「${name}」${type&&type!=='-'?' '+type:''}`;
+  if(!s)return '';
+  const name=String(s.tie_up||'').trim();if(!name)return '';
+  // KaraokeLocal本体と同じ優先順: カテゴリ細分類 > カテゴリ。
+  // Modern KVDB stores fine classifications in normalized detail tables;
+  // tie_up_sub_category remains only as compatibility for old exports.
+  const canonicalFine=categoryVals(s.tie_up_category_detail||'').filter(x=>x&&x!=='-').join(' / ');
+  const legacyFine=categoryVals(s.tie_up_sub_category||'').filter(x=>x&&x!=='-').join(' / ');
+  const broad=categoryVals(s.tie_up_category||'').filter(x=>x&&x!=='-').join(' / ');
+  const label=canonicalFine||legacyFine||broad;
+  const type=String(s.op_ed||'').trim();
+  return `${label}${name?`「${name}」`:''}${type&&type!=='-'?type:''}`;
+}
+function tieUpDetailIds(s){return categoryVals(s?.tie_up_category_detail_ids||'')}
+function categoryDetailMaster(){return Array.isArray(DATA?.category_details)?DATA.category_details:[]}
+function categoryDetailDescendants(detailId){
+  const all=categoryDetailMaster(),found=new Set([String(detailId||'')]),queue=[String(detailId||'')];
+  while(queue.length){const parent=queue.shift();for(const x of all){const id=String(x?.id||'');if(id&&String(x?.parent_id||'')===parent&&!found.has(id)){found.add(id);queue.push(id)}}}
+  return found;
 }
 function songMeta(s){return [tieUpDisplay(s),s.release_year?`${s.release_year}年`:'' ].filter(Boolean).join(' / ')}
 function songHref(s){return `#song/${encodeURIComponent(String(s?.id||''))}`}
@@ -261,7 +273,7 @@ function renderSearch(initialMode='title',directPerson='',directRole=''){
   function openTieupEntity(name){selectedEntity=name;syncFeatureVisibility();header.style.display='flex';header.innerHTML=`<button id="entityBack">${lastEntityQuery?`← ${esc(lastEntityQuery)} の検索結果`:'← タイアップ検索へ'}</button><strong>タイアップ：${esc(name)}</strong>`;header.querySelector('button').onclick=()=>lastEntityQuery?doSearch(false):(header.style.display='none');renderFilteredSongs(sortSongsByReading(DATA.songs.filter(s=>norm(s.tie_up)===norm(name))))}
   function buildPersonSearchList(q,matchMode){const reasonRank={'':0,'連名':1,'別名義':2,'所属グループ':3,'所属メンバー':4,'関連人物':5},matched=new Map();for(const p of pmap.values()){const reason=personCandidateReason(p,q,matchMode,pmap);if(reason!==null)matched.set(norm(p.name),{name:p.name,count:personTotalCount(p),role_counts:roleCounts(p),reason})}const ordered=[...matched.keys()].sort((a,b)=>{const A=matched.get(a),B=matched.get(b);return (norm(A.name)===q?0:1)-(norm(B.name)===q?0:1)||(reasonRank[A.reason]??9)-(reasonRank[B.reason]??9)||A.name.localeCompare(B.name,'ja')});const entities=[],consumed=new Set();for(const key of ordered){if(consumed.has(key))continue;const item=matched.get(key),p=pmap.get(key);if(item.reason===''&&!p.combined_artist_credit){const family=buildPersonFamily(p.name,pmap,new Set(),0,new Set());const keys=treePersonKeys(family);for(const k of keys)consumed.add(k);entities.push({name:p.name,count:keys.size,tree_count:keys.size,children:family});}else{const leaf=personTreeLeafData(p.name,item.reason,pmap,p.combined_artist_credit?'combined':'single');entities.push({name:p.name,count:1,tree_count:1,children:[leaf]});consumed.add(key)}}return entities.slice(0,300)}
   function fileMatch(v,raw){const fuzzy=fileFuzzy.checked,needle=fileSearchNorm(raw,fuzzy),mode=fileMatchMode.value;return fileSearchCandidates(v).some(c=>{const x=fileSearchNorm(c,fuzzy);if(mode==='exact')return x===needle;if(mode==='prefix')return x.startsWith(needle);if(mode==='suffix')return x.endsWith(needle);return x.includes(needle)})}
-  function doSearch(storeQuery=true){const raw=input.value.trim(),q=norm(raw);if(!q){hit.textContent='0';return}if(storeQuery)lastEntityQuery=raw;personTrail=[];hidePersonKana();selectedEntity='';header.style.display='none';relationsBox.style.display='none';renderMainTabs();syncFeatureVisibility();personOptions.style.display=currentMode==='person'?'flex':'none';if(currentMode==='keyword'&&fileOnly.checked){renderFileSearchResults(results,flattenFolderFiles().filter(v=>fileMatch(v,raw)),hit);return}if(currentMode==='person'){renderPersonEntities(buildPersonSearchList(q,personMatch.value));return}if(currentMode==='tie-up'){const map=new Map();for(const s of DATA.songs){if(!s.tie_up||!norm([s.tie_up,s.tie_up_ruby,s.series].join(' ')).includes(q))continue;const k=norm(s.tie_up);if(!map.has(k))map.set(k,{key:k,name:s.tie_up,count:0,ids:new Set()});const e=map.get(k);e.ids.add(s.id);e.count=e.ids.size}renderTieEntities([...map.values()].sort((a,b)=>a.name.localeCompare(b.name,'ja')));return}const list=sortSongsByReading(DATA.songs.filter(s=>currentMode==='title'?norm([s.song_name,s.song_ruby,s.aliases].join(' ')).includes(q):norm([s.song_name,s.song_ruby,s.song_keyword,s.artists,s.lyricists,s.composers,s.arrangers,s.tags,s.tag_keywords,s.tie_up,s.tie_up_ruby,s.tie_up_category,s.tie_up_sub_category,s.series,s.op_ed,s.aliases].join(' ')).includes(q)));renderFilteredSongs(list)}
+  function doSearch(storeQuery=true){const raw=input.value.trim(),q=norm(raw);if(!q){hit.textContent='0';return}if(storeQuery)lastEntityQuery=raw;personTrail=[];hidePersonKana();selectedEntity='';header.style.display='none';relationsBox.style.display='none';renderMainTabs();syncFeatureVisibility();personOptions.style.display=currentMode==='person'?'flex':'none';if(currentMode==='keyword'&&fileOnly.checked){renderFileSearchResults(results,flattenFolderFiles().filter(v=>fileMatch(v,raw)),hit);return}if(currentMode==='person'){renderPersonEntities(buildPersonSearchList(q,personMatch.value));return}if(currentMode==='tie-up'){const map=new Map();for(const s of DATA.songs){if(!s.tie_up||!norm([s.tie_up,s.tie_up_ruby,s.series].join(' ')).includes(q))continue;const k=norm(s.tie_up);if(!map.has(k))map.set(k,{key:k,name:s.tie_up,count:0,ids:new Set()});const e=map.get(k);e.ids.add(s.id);e.count=e.ids.size}renderTieEntities([...map.values()].sort((a,b)=>a.name.localeCompare(b.name,'ja')));return}const list=sortSongsByReading(DATA.songs.filter(s=>currentMode==='title'?norm([s.song_name,s.song_ruby,s.aliases].join(' ')).includes(q):norm([s.song_name,s.song_ruby,s.song_keyword,s.artists,s.lyricists,s.composers,s.arrangers,s.tags,s.tag_keywords,s.tie_up,s.tie_up_ruby,s.tie_up_category,s.tie_up_category_detail,s.tie_up_sub_category,s.series,s.op_ed,s.aliases].join(' ')).includes(q)));renderFilteredSongs(list)}
   document.getElementById('searchBtn').onclick=()=>doSearch();document.getElementById('clearBtn').onclick=()=>{input.value='';lastEntityQuery='';hidePersonKana();hit.textContent='0';results.innerHTML='<div class="denmoku-empty">検索語を入力してください</div>';input.focus()};input.onkeydown=e=>{if(e.key==='Enter'){e.preventDefault();doSearch()}};fileOnly.onchange=()=>{fileSearchOptions.style.display=fileOnly.checked?'flex':'none';if(input.value.trim())doSearch(false)};fileMatchMode.onchange=fileFuzzy.onchange=()=>{if(fileOnly.checked&&input.value.trim())doSearch(false)};personMatch.onchange=()=>{if(currentMode==='person'&&!selectedEntity&&input.value.trim())doSearch(false)};
   applyMode(currentMode);if(directPerson&&currentMode==='person')openPerson(directPerson,directRole);else setTimeout(()=>input.focus(),30);
 }
@@ -561,7 +573,7 @@ function renderSongDetail(songId){
   if(song.features?.anime)badges.push('アニメ・ゲーム映像');
   if(song.features?.parts)badges.push('パート分け');
   const artistLinks=song.artists?[song.artists]:[];
-  const tieDisplay=[song.tie_up||'',song.op_ed?`(${song.op_ed})`:''].filter(Boolean).join(' ');
+  const tieDisplay=tieUpDisplay(song);
   const tags=uniqueValues(vals(song.tags));
   const aliases=uniqueValues(vals(song.aliases));
   pageShell(`${topNav()}<div class="web-song-detail-page">
@@ -620,28 +632,51 @@ function renderTieup(){
     const cats=[...catMap.values()].sort((a,b)=>a.key.localeCompare(b.key));
     root.innerHTML=`<div class="web-browse-grid"><button class="denmoku-entity-row" id="seriesBtn"><span><strong>📚 シリーズ</strong></span><span class="denmoku-entity-count">${nf(seriesMap.size)}件　›</span></button>${cats.map(x=>`<button class="denmoku-entity-row" data-cat="${esc(x.key)}"><span><strong>${esc(x.name)}</strong></span><span class="denmoku-entity-count">${nf(x.count)}曲　›</span></button>`).join('')}</div>`;
     root.querySelector('#seriesBtn').onclick=seriesView;
-    root.querySelectorAll('[data-cat]').forEach(b=>{const cat=catMap.get(b.dataset.cat);b.onclick=()=>tieupsFor(s=>vals(s.tie_up_category_id).includes(b.dataset.cat),cat.name,rootView,false,true)});
+    root.querySelectorAll('[data-cat]').forEach(b=>{const cat=catMap.get(b.dataset.cat);b.onclick=()=>tieupsFor(s=>vals(s.tie_up_category_id).includes(b.dataset.cat),cat.name,rootView,false,true,b.dataset.cat)});
   }
   function seriesView(){
     head.classList.remove('web-tieup-sticky-head');head.style.display='flex';head.innerHTML='<button type="button">← ジャンル一覧へ</button><strong>シリーズ</strong>';head.querySelector('button').onclick=rootView;
     const list=[...seriesMap.values()].sort((a,b)=>a.name.localeCompare(b.name,'ja'));root.innerHTML=entityRows(list);
     bindEntityClicks(root,list,x=>tieupsFor(s=>vals(s.series).some(v=>norm(v)===x.key),x.name,seriesView,true,false));
   }
-  function tieupsFor(pred,label,back,showCategory=false,showDetailFilters=false){
+  function tieupsFor(pred,label,back,showCategory=false,showDetailFilters=false,categoryId=''){
     head.classList.add('web-tieup-sticky-head');head.style.display='flex';head.innerHTML=`<button type="button">← 一覧へ</button><strong>${esc(label)}</strong>`;head.querySelector('button').onclick=back;
     const source=DATA.songs.filter(pred).filter(s=>s.tie_up);
-    const details=[...new Set(source.flatMap(s=>categoryVals(s.tie_up_sub_category)).filter(x=>x&&x!=='-'))].sort((a,b)=>hira(a).localeCompare(hira(b),'ja'));
     const state={detail:'',kana:'',q:''};
+
+    // KaraokeLocal本体と同じく、カテゴリ細分類マスターのトップ階層を
+    // フィルタボタンとして表示。親分類を選ぶと子孫分類もまとめて対象。
+    const topDetails=showDetailFilters&&categoryId?categoryDetailMaster().filter(x=>String(x?.parent_category_id||'')===String(categoryId)&&!String(x?.parent_id||'')):[];
+    const detailFilters=[];
+    const modernDetails=topDetails.length>0;
+    if(modernDetails){
+      for(const x of topDetails){
+        const accepted=categoryDetailDescendants(x.id);
+        if(source.some(s=>tieUpDetailIds(s).some(id=>accepted.has(id))))detailFilters.push({id:String(x.id),name:String(x.name||'細分類'),accepted});
+      }
+      if(source.some(s=>!tieUpDetailIds(s).length))detailFilters.push({id:'__none__',name:'細分類なし',none:true});
+    }else if(showDetailFilters){
+      // Compatibility with legacy DBs that stored the fine category directly.
+      const legacy=[...new Set(source.flatMap(s=>categoryVals(s.tie_up_category_detail||s.tie_up_sub_category)).filter(x=>x&&x!=='-'))].sort((a,b)=>hira(a).localeCompare(hira(b),'ja'));
+      for(const x of legacy)detailFilters.push({id:'legacy:'+x,name:x,legacy:x});
+    }
+    const detailMap=new Map(detailFilters.map(x=>[x.id,x]));
+    const matchesDetail=s=>{
+      if(!state.detail)return true;const f=detailMap.get(state.detail);if(!f)return true;
+      const ids=tieUpDetailIds(s);if(f.none)return !ids.length;if(f.accepted)return ids.some(id=>f.accepted.has(id));
+      return categoryVals(s.tie_up_category_detail||s.tie_up_sub_category).includes(f.legacy);
+    };
+
     function renderCurrent(){
       const nq=String(state.q||'').normalize('NFKC').toLocaleLowerCase('ja-JP').replace(/[\s　]+/g,'');
-      const filtered=source.filter(s=>(!state.detail||categoryVals(s.tie_up_sub_category).includes(state.detail))&&(!state.kana||kanaBucket(s.tie_up_ruby||s.tie_up)===state.kana)&&(!nq||String((s.tie_up||'')+' '+(s.tie_up_ruby||'')).normalize('NFKC').toLocaleLowerCase('ja-JP').replace(/[\s　]+/g,'').includes(nq)));
+      const filtered=source.filter(s=>matchesDetail(s)&&(!state.kana||kanaBucket(s.tie_up_ruby||s.tie_up)===state.kana)&&(!nq||String((s.tie_up||'')+' '+(s.tie_up_ruby||'')).normalize('NFKC').toLocaleLowerCase('ja-JP').replace(/[\s　]+/g,'').includes(nq)));
       const map=new Map();
       for(const s of filtered){
         const k=norm(s.tie_up);if(!map.has(k))map.set(k,{key:k,name:s.tie_up,ruby:s.tie_up_ruby||s.tie_up,count:0,ids:new Set(),categories:new Set()});
         const e=map.get(k);e.ids.add(s.id);e.count=e.ids.size;if(showCategory)for(const cat of categoryVals(s.tie_up_category))if(cat&&cat!=='-')e.categories.add(cat);
       }
       const list=[...map.values()].map(x=>({...x,sub:showCategory&&x.categories.size?`(${[...x.categories].join(' / ')})`:''})).sort((a,b)=>hira(a.ruby||a.name).localeCompare(hira(b.ruby||b.name),'ja'));
-      const detailHtml=showDetailFilters&&details.length?`<div class="web-tieup-filter-block"><div class="web-tieup-filter-label">細分類</div><div class="web-tieup-detail-buttons">${details.map(x=>`<button type="button" data-detail="${esc(x)}" class="${state.detail===x?'active':''}">${esc(x)}</button>`).join('')}</div></div>`:'';
+      const detailHtml=showDetailFilters&&detailFilters.length?`<div class="web-tieup-filter-block"><div class="web-tieup-filter-label">細分類</div><div class="web-tieup-detail-buttons">${detailFilters.map(x=>`<button type="button" data-detail="${esc(x.id)}" class="${state.detail===x.id?'active':''}">${esc(x.name)}</button>`).join('')}</div></div>`:'';
       const kanaHtml=`<div class="web-tieup-filter-block"><div class="web-tieup-filter-label">五十音</div><div class="web-tieup-kana-buttons">${kanaKeys.map(x=>`<button type="button" data-kana="${x}" class="${state.kana===x?'active':''}">${x}</button>`).join('')}</div></div>`;
       const nameHtml=`<div class="artist-name-filter web-tieup-name-filter"><span class="artist-name-filter-label">タイアップ名</span><input id="tieupNameInput" type="search" class="artist-name-filter-input" placeholder="タイアップ名で絞り込み" value="${esc(state.q)}" autocomplete="off"><button id="tieupNameClear" type="button" class="artist-name-filter-clear" ${state.q?'':'disabled'}>クリア</button></div>`;
       root.innerHTML=`<div class="web-tieup-sticky-filters">${detailHtml}${nameHtml}${kanaHtml}</div><div class="web-tieup-result-count">${nf(list.length)}件</div><div id="tieupList">${list.length?entityRows(list):'<div class="denmoku-empty">条件に一致するタイアップがありません</div>'}</div>`;
@@ -650,7 +685,8 @@ function renderTieup(){
       root.querySelectorAll('[data-kana]').forEach(b=>b.onclick=()=>{state.kana=state.kana===b.dataset.kana?'':b.dataset.kana;renderCurrent()});
       const listRoot=root.querySelector('#tieupList');if(list.length)bindEntityClicks(listRoot,list,x=>{
         head.innerHTML=`<button type="button">← タイアップ一覧へ</button><strong>${esc(x.name)}</strong>`;head.querySelector('button').onclick=renderCurrent;
-        renderSongList(root,source.filter(s=>norm(s.tie_up)===x.key));
+        // Keep the selected fine-category filter when opening the work.
+        renderSongList(root,filtered.filter(s=>norm(s.tie_up)===x.key));
       });
     }
     renderCurrent();
@@ -749,7 +785,8 @@ function updateVideoRow(v){
   const linked=!!(v.song_id&&v.song_name);
   const title=linked?v.song_name:(v.filename||'名称不明の動画');
   const artist=linked?(v.artists||'歌手情報なし'):'DB未紐づけ';
-  const meta=linked&&v.tie_up?`<div class="update-meta">${esc(v.tie_up)}</div>`:'';
+  const tie=linked?tieUpDisplay(v):'';
+  const meta=tie?`<div class="update-meta">${esc(tie)}</div>`:'';
   const file=v.rel_path||v.filename||'';
   const vocal=v.vocal_label?` <span class="muted">(${esc(v.vocal_label)})</span>`:'';
   const action=linked?`<div class="update-action"><a class="web-update-detail-btn" href="#song/${encodeURIComponent(v.song_id)}">曲詳細</a></div>`:'';
