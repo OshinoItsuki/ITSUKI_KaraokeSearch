@@ -33,12 +33,12 @@ let DATA=null;
 const app=document.getElementById('app');
 const state={};
 const THEME_KEY='itsuki-web-theme';
-const THEMES=new Set(['joy','dam','classic']);
+const THEMES=new Set(['joy','dam']);
 function currentTheme(){
-  try{const saved=localStorage.getItem(THEME_KEY);return THEMES.has(saved)?saved:'joy'}catch(e){return 'joy'}
+  try{const saved=localStorage.getItem(THEME_KEY);return saved==='joy'?'joy':(saved==='dam'||saved==='classic'?'dam':'joy')}catch(e){return 'joy'}
 }
 function applyTheme(theme){
-  const value=THEMES.has(theme)?theme:'joy';
+  const value=theme==='classic'?'dam':(THEMES.has(theme)?theme:'joy');
   document.documentElement.dataset.theme=value;
   if(document.body)document.body.dataset.theme=value;
   const meta=document.querySelector('meta[name="theme-color"]');
@@ -132,7 +132,7 @@ function renderTop(){
           <a class="category-btn top-middle-btn c-purple" href="#foreign"><span class="category-icon">🌐</span><span>外国曲</span></a>
           <a class="category-btn top-middle-btn c-blue" href="#all"><span class="category-icon">📚</span><span>全曲一覧</span></a>
         </div>
-        ${topCustomLinksHtml(DATA.home_links,currentTheme()==='dam'||currentTheme()==='classic')}
+        ${topCustomLinksHtml(DATA.home_links,currentTheme()==='dam')}
       </section>
     </div>`);
 }
@@ -593,47 +593,123 @@ function renderSongDetail(songId){
   if(song.features?.mv_pv)badges.push('MV・PV');
   if(song.features?.live)badges.push('LIVEカラオケ');
   if(song.features?.anime)badges.push('アニメ・ゲーム映像');
+  if(song.features?.tokusatsu)badges.push('特撮映像');
   if(song.features?.parts)badges.push('パート分け');
   const artistLinks=song.artists?[song.artists]:[];
   const tieDisplay=tieUpDisplay(song);
   const tags=uniqueValues(vals(song.tags));
   const aliases=uniqueValues(vals(song.aliases));
-  pageShell(`${topNav()}<div class="web-song-detail-page">
-    <div class="web-detail-toolbar"><button id="songDetailBack" type="button">← 戻る</button><span>曲詳細</span></div>
-    <section class="reserve-song-card web-song-detail-card">
-      <div class="reserve-song-line reserve-song-title-line"><div class="reserve-title">${esc(song.song_name||'曲名不明')}</div></div>
-      ${song.song_ruby?`<div class="web-detail-ruby">${esc(song.song_ruby)}</div>`:''}
-      <div class="reserve-song-line reserve-artist-row"><div class="reserve-song-icon reserve-person-icon" aria-hidden="true"></div><div class="web-detail-artist-links">${detailLinkList('artist',artistLinks)}</div></div>
-      <div class="reserve-core-grid">
-        <div class="reserve-core-cell web-video-path-cell">
-          <details class="web-video-paths">
-            <summary><span>公開動画</span><strong>${nf(song.video_count)}本</strong><span class="web-video-path-arrow" aria-hidden="true">⌄</span></summary>
-            <div class="web-video-path-list">${(song.video_paths||[]).length?(song.video_paths||[]).map(p=>`<div class="web-video-path-item">🎬 ${esc(p)}</div>`).join(''):'<div class="web-video-path-empty">公開フォルダ内の相対パス情報はありません。</div>'}</div>
-          </details>
+  const categoryIds=vals(song.tie_up_category_id),categoryNames=vals(song.tie_up_category);
+  const categoryLinks=categoryIds.map((id,i)=>({id,name:categoryNames[i]||id})).filter(x=>x.id);
+  const fineCategory=categoryVals(song.tie_up_category_detail||song.tie_up_sub_category||'').filter(x=>x&&x!=='-').join(' / ');
+  const lyricsQuery=encodeURIComponent([song.song_name,song.artists,'歌詞'].filter(Boolean).join(' '));
+  const otherSongsHref=song.artists?entityHref('artist',song.artists):'';
+  const infoValue=(html,empty='―')=>html&&String(html).trim()?html:`<span class="joy-song-info-empty">${empty}</span>`;
+  const plainValues=values=>{const list=uniqueValues(values);return list.length?list.map(esc).join(' / '):''};
+  const infoRow=(label,value,wide=false)=>`<div class="joy-song-info-row${wide?' wide':''}"><div class="joy-song-info-label">${esc(label)}</div><div class="joy-song-info-value">${infoValue(value)}</div></div>`;
+  const videoPaths=(song.video_paths||[]);
+  const videoHtml=`<details class="joy-song-video-details"><summary><strong>${nf(song.video_count)}本</strong><span>相対パスを表示</span></summary><div class="joy-song-video-list">${videoPaths.length?videoPaths.map(p=>`<div>🎬 ${esc(p)}</div>`).join(''):'<div class="joy-song-info-empty">公開フォルダ内の相対パス情報はありません。</div>'}</div></details>`;
+
+  if(currentTheme()==='joy'){
+    const joyInfo=[
+      infoRow('公開動画',videoHtml,true),
+      infoRow('リリース年',song.release_year?`<a href="${entityHref('year',song.release_year)}">${esc(song.release_year)}年 ›</a>`:''),
+      infoRow('作詞',detailLinkList('lyricist',vals(song.lyricists))),
+      infoRow('作曲',detailLinkList('composer',vals(song.composers))),
+      infoRow('編曲',detailLinkList('arranger',vals(song.arrangers))),
+      infoRow('タイアップ',song.tie_up?`<a href="${entityHref('tieup',song.tie_up)}">${esc(song.tie_up)} ›</a>`:''),
+      infoRow('カテゴリ細分類',esc(fineCategory||'')),
+      infoRow('カテゴリー',categoryLinks.length?categoryLinks.map(x=>`<a href="${entityHref('category',x.id)}">${esc(x.name)} ›</a>`).join(''):''),
+      infoRow('シリーズ',detailLinkList('series',vals(song.series))),
+      infoRow('OP / ED',plainValues(song.op_ed?[song.op_ed]:[])),
+      infoRow('タイアップ年',song.tie_up_release_year?`${esc(song.tie_up_release_year)}年`:''),
+      infoRow('別名・別表記',plainValues(aliases),true),
+      infoRow('キーワード',plainValues(vals(song.song_keyword)),true),
+      infoRow('タグ',plainValues(tags),true),
+      infoRow('公開情報',plainValues(uniqueValues(badges)),true),
+    ].join('');
+    pageShell(`${topNav()}<div class="joy-song-detail-layout">
+      <div class="joy-song-detail-topline"><button id="songDetailBack" type="button">← 戻る</button><span>曲詳細</span></div>
+      <section class="joy-song-summary-card">
+        <div class="joy-song-summary-main">
+          <h1>${esc(song.song_name||'曲名不明')}</h1>
+          ${song.song_ruby?`<div class="joy-song-ruby">${esc(song.song_ruby)}</div>`:''}
+          <div class="joy-song-artist-line"><span class="joy-song-note-icon">♫</span><div>${detailLinkList('artist',artistLinks)}</div></div>
+          <div class="joy-song-lyrics-line"><span class="joy-song-lyrics-label">歌いだし歌詞</span><span class="joy-song-lyrics-placeholder">歌詞情報はWeb検索で確認</span><a class="joy-song-lyrics-search" href="https://www.google.com/search?q=${lyricsQuery}" target="_blank" rel="noopener noreferrer">🔎 歌詞を検索</a></div>
         </div>
-        <div class="reserve-core-cell reserve-year-cell"><span>リリース年</span><strong>${song.release_year?`<a class="web-detail-year-link" href="${entityHref('year',song.release_year)}">${esc(song.release_year)}年 ›</a>`:'―'}</strong></div>
-      </div>
-      <div class="reserve-detail-grid">
-        ${detailCell('作詞','lyricist',vals(song.lyricists))}
-        ${detailCell('作曲','composer',vals(song.composers))}
-        ${detailCell('編曲','arranger',vals(song.arrangers),true)}
-        ${detailCell('タイアップ','tieup',song.tie_up?[song.tie_up]:[],true)}
-        ${categoryDetailCell(song)}
-        ${detailCell('シリーズ','series',vals(song.series))}
-        ${detailCell('OP / ED',null,song.op_ed?[song.op_ed]:[])}
-        ${detailCell('タイアップ年',null,song.tie_up_release_year?[`${song.tie_up_release_year}年`]:[])}
-        ${detailCell('別名・別表記',null,aliases,true)}
-        ${detailCell('キーワード',null,vals(song.song_keyword),true)}
-      </div>
-      ${tieDisplay?`<div class="web-detail-tie-summary">🎞️ ${esc(tieDisplay)}</div>`:''}
-      ${tags.length?`<div class="web-detail-tag-section"><div class="reserve-related-title">タグ</div><div class="reserve-related-tags">${tags.map(t=>`<span class="reserve-related-chip">${esc(t)}</span>`).join('')}</div></div>`:''}
-      ${badges.length?`<div class="web-detail-tag-section"><div class="reserve-related-title">この曲の公開情報</div><div class="reserve-related-tags">${uniqueValues(badges).map(t=>`<span class="reserve-related-chip">${esc(t)}</span>`).join('')}</div></div>`:''}
-    </section>
-  </div>`,'web-song-detail-wrap');
+        <div class="joy-song-summary-actions">${otherSongsHref?`<a class="joy-other-artist-songs" href="${otherSongsHref}">この歌手の他の曲 <span>›</span></a>`:''}</div>
+      </section>
+      <section class="joy-song-info-panel">
+        <div class="joy-song-info-heading">♫ 曲情報</div>
+        <div class="joy-song-info-grid">${joyInfo}</div>
+        ${tieDisplay?`<div class="joy-song-tie-summary">${esc(tieDisplay)}</div>`:''}
+      </section>
+    </div>`,'web-song-detail-wrap joy-song-detail-wrap');
+  }else{
+    pageShell(`${topNav()}<div class="web-song-detail-page">
+      <div class="web-detail-toolbar"><button id="songDetailBack" type="button">← 戻る</button><span>曲詳細</span></div>
+      <section class="reserve-song-card web-song-detail-card">
+        <div class="reserve-song-line reserve-song-title-line"><div class="reserve-title">${esc(song.song_name||'曲名不明')}</div></div>
+        ${song.song_ruby?`<div class="web-detail-ruby">${esc(song.song_ruby)}</div>`:''}
+        <div class="reserve-song-line reserve-artist-row"><div class="reserve-song-icon reserve-person-icon" aria-hidden="true"></div><div class="web-detail-artist-links">${detailLinkList('artist',artistLinks)}</div></div>
+        <div class="reserve-core-grid">
+          <div class="reserve-core-cell web-video-path-cell"><details class="web-video-paths"><summary><span>公開動画</span><strong>${nf(song.video_count)}本</strong><span class="web-video-path-arrow" aria-hidden="true">⌄</span></summary><div class="web-video-path-list">${videoPaths.length?videoPaths.map(p=>`<div class="web-video-path-item">🎬 ${esc(p)}</div>`).join(''):'<div class="web-video-path-empty">公開フォルダ内の相対パス情報はありません。</div>'}</div></details></div>
+          <div class="reserve-core-cell reserve-year-cell"><span>リリース年</span><strong>${song.release_year?`<a class="web-detail-year-link" href="${entityHref('year',song.release_year)}">${esc(song.release_year)}年 ›</a>`:'―'}</strong></div>
+        </div>
+        <div class="reserve-detail-grid">
+          ${detailCell('作詞','lyricist',vals(song.lyricists))}
+          ${detailCell('作曲','composer',vals(song.composers))}
+          ${detailCell('編曲','arranger',vals(song.arrangers),true)}
+          ${detailCell('タイアップ','tieup',song.tie_up?[song.tie_up]:[],true)}
+          ${categoryDetailCell(song)}
+          ${detailCell('シリーズ','series',vals(song.series))}
+          ${detailCell('OP / ED',null,song.op_ed?[song.op_ed]:[])}
+          ${detailCell('タイアップ年',null,song.tie_up_release_year?[`${song.tie_up_release_year}年`]:[])}
+          ${detailCell('別名・別表記',null,aliases,true)}
+          ${detailCell('キーワード',null,vals(song.song_keyword),true)}
+        </div>
+        ${tieDisplay?`<div class="web-detail-tie-summary">🎞️ ${esc(tieDisplay)}</div>`:''}
+        ${tags.length?`<div class="web-detail-tag-section"><div class="reserve-related-title">タグ</div><div class="reserve-related-tags">${tags.map(t=>`<span class="reserve-related-chip">${esc(t)}</span>`).join('')}</div></div>`:''}
+        ${badges.length?`<div class="web-detail-tag-section"><div class="reserve-related-title">この曲の公開情報</div><div class="reserve-related-tags">${uniqueValues(badges).map(t=>`<span class="reserve-related-chip">${esc(t)}</span>`).join('')}</div></div>`:''}
+      </section>
+    </div>`,'web-song-detail-wrap');
+  }
   document.getElementById('songDetailBack').onclick=()=>{if(history.length>1)history.back();else location.hash='#top'};
 }
 
-function renderAll(){document.title='ITSUKI - 全曲一覧';pageShell(`${topNav()}<header class="browse-header"><div class="browse-icon">📚</div><div><div class="browse-title">全曲一覧</div><div class="browse-note">選曲可能な${nf(DATA.song_count)}曲</div></div></header><main id="browseResults" class="browse-results"></main>`,'browse-page');renderSongList(document.getElementById('browseResults'),DATA.songs,'',500)}
+function renderAll(){
+  document.title='ITSUKI - 全曲一覧';
+  const kanaKeys=['あ','か','さ','た','な','は','ま','や','ら','わ'];
+  const state={title:'',artist:'',kana:'',features:new Set()};
+  pageShell(`${topNav()}<header class="browse-header"><div class="browse-icon">📚</div><div><div class="browse-title">全曲一覧</div><div class="browse-note">選曲可能な${nf(DATA.song_count)}曲</div></div></header>
+    <div class="web-all-sticky-filters">
+      <div class="web-all-text-filters"><label><span>曲名</span><input id="allTitleFilter" type="search" placeholder="曲名で絞り込み" autocomplete="off"></label><label><span>歌手名</span><input id="allArtistFilter" type="search" placeholder="歌手名で絞り込み" autocomplete="off"></label><button id="allFilterClear" type="button">クリア</button></div>
+      <div class="web-all-feature-filters"><span>映像・パート</span><button type="button" data-all-feature="anime">アニメ・ゲーム映像</button><button type="button" data-all-feature="tokusatsu">特撮映像</button><button type="button" data-all-feature="live">ライブ映像</button><button type="button" data-all-feature="parts">パート分け</button></div>
+      <div id="allKanaFilter" class="kana-jump web-all-kana-filter"></div>
+    </div>
+    <div id="allResultCount" class="web-tieup-result-count"></div><main id="browseResults" class="browse-results"></main>`,'browse-page');
+  const root=document.getElementById('browseResults'),titleInput=document.getElementById('allTitleFilter'),artistInput=document.getElementById('allArtistFilter'),clear=document.getElementById('allFilterClear'),kana=document.getElementById('allKanaFilter'),count=document.getElementById('allResultCount'),featureButtons=[...document.querySelectorAll('[data-all-feature]')];
+  function normalizeFilterText(v){return String(v||'').normalize('NFKC').toLocaleLowerCase('ja-JP').replace(/[\s　]+/g,'')}
+  const searchable=DATA.songs.map(s=>({...s,__title:normalizeFilterText(`${s.song_name||''} ${s.song_ruby||''} ${s.aliases||''}`),__artist:normalizeFilterText(s.artists||'')}));
+  function refreshButtons(){for(const b of featureButtons)b.classList.toggle('active',state.features.has(b.dataset.allFeature));for(const b of kana.querySelectorAll('button'))b.classList.toggle('active',state.kana===b.dataset.kana)}
+  function filtered(){
+    const tq=normalizeFilterText(state.title),aq=normalizeFilterText(state.artist);
+    return searchable.filter(s=>{
+      if(tq&&!s.__title.includes(tq))return false;
+      if(aq&&!s.__artist.includes(aq))return false;
+      if(state.kana&&kanaBucket(s.song_ruby||s.song_name)!==state.kana)return false;
+      if(state.features.size&&![...state.features].every(k=>!!s.features?.[k]))return false;
+      return true;
+    });
+  }
+  function render(){const list=sortSongsByReading(filtered());count.textContent=`${nf(list.length)}曲`;clear.disabled=!state.title&&!state.artist&&!state.kana&&!state.features.size;refreshButtons();renderSongList(root,list,'条件に一致する曲がありません',500)}
+  kana.innerHTML=kanaKeys.map(k=>`<button type="button" data-kana="${k}">${k}</button>`).join('');
+  titleInput.oninput=()=>{state.title=titleInput.value;render()};artistInput.oninput=()=>{state.artist=artistInput.value;render()};
+  kana.querySelectorAll('button').forEach(b=>b.onclick=()=>{state.kana=state.kana===b.dataset.kana?'':b.dataset.kana;render()});
+  featureButtons.forEach(b=>b.onclick=()=>{const k=b.dataset.allFeature;state.features.has(k)?state.features.delete(k):state.features.add(k);if(state.features.size===featureButtons.length)state.features.clear();render()});
+  clear.onclick=()=>{state.title='';state.artist='';state.kana='';state.features.clear();titleInput.value='';artistInput.value='';render()};
+  render();
+}
 
 function renderForeign(){const counts=new Map();for(const s of DATA.songs)for(const l of (s.languages||[]))counts.set(l,(counts.get(l)||0)+1);const langs=[...counts.entries()].sort((a,b)=>a[0].localeCompare(b[0],'ja'));document.title='ITSUKI - 外国曲';pageShell(`${topNav()}<header class="browse-header"><div class="browse-icon">🌐</div><div><div class="browse-title">外国曲</div><div class="browse-note">言語を選択して曲一覧を表示</div></div></header><div id="entityHeader" class="browse-entity-header" style="display:none"></div><main id="browseResults" class="browse-results"><div class="web-language-grid">${langs.map(([l,c])=>`<button class="web-language-btn" data-lang="${esc(l)}"><img src="./assets/flags/${flagPath(l)}" alt=""><strong>${esc(l)}</strong><small>${nf(c)}曲</small></button>`).join('')}</div></main>`,'browse-page');const root=document.getElementById('browseResults'),head=document.getElementById('entityHeader');root.querySelectorAll('[data-lang]').forEach(b=>b.onclick=()=>{const l=b.dataset.lang;head.style.display='flex';head.innerHTML=`<button type="button">← 言語一覧へ</button><strong>${esc(l)}</strong>`;head.querySelector('button').onclick=renderForeign;renderSongList(root,DATA.songs.filter(s=>(s.languages||[]).includes(l)))})}
 
@@ -898,10 +974,9 @@ function renderUpdates(){
 function renderSettings(){
   document.title='ITSUKI - 表示設定';
   const selected=currentTheme();
-  pageShell(`${topNav()}<section class="theme-settings-page"><div class="theme-settings-head"><span class="theme-settings-back">表示</span><div><h1>表示テーマ</h1><p>この端末のブラウザにだけ保存されます。</p></div></div><div class="theme-choice-grid theme-choice-main"><button type="button" class="theme-choice joy-choice ${selected==='joy'?'selected':''}" data-theme-choice="joy"><span class="theme-preview joy-preview"><i></i><b></b><b></b><b></b></span><strong>JOYSOUND風</strong><small>白い一覧・赤い操作色・全画面共通の上部操作帯を使います。</small></button><button type="button" class="theme-choice dam-choice ${selected==='dam'?'selected':''}" data-theme-choice="dam"><span class="theme-preview dam-preview"><i></i><b></b><b></b><b></b></span><strong>DAM WAO!風</strong><small>黒背景とカラフルな大型ボタンを中心にした表示です。</small></button></div><div class="theme-legacy-section"><div class="theme-legacy-title">旧テーマ</div><button type="button" class="theme-choice classic-choice compact ${selected==='classic'?'selected':''}" data-theme-choice="classic"><span class="theme-preview classic-preview"><i></i><b></b><b></b><b></b></span><span><strong>従来のITSUKI</strong><small>v0.7.0以前の黒背景・紫アクセント表示も残しています。</small></span></button></div><div class="theme-setting-note">設定はLocalStorageへ保存するため、公開サイトを更新してもこの端末では選択したテーマを維持します。</div></section>`,`theme-settings-wrap`);
+  pageShell(`${topNav()}<section class="theme-settings-page"><div class="theme-settings-head"><span class="theme-settings-back">表示</span><div><h1>表示テーマ</h1><p>この端末のブラウザにだけ保存されます。</p></div></div><div class="theme-choice-grid theme-choice-main"><button type="button" class="theme-choice joy-choice ${selected==='joy'?'selected':''}" data-theme-choice="joy"><span class="theme-preview joy-preview"><i></i><b></b><b></b><b></b></span><strong>JOYSOUND風</strong><small>白い一覧・赤い操作色・全画面共通の上部操作帯を使います。</small></button><button type="button" class="theme-choice dam-choice ${selected==='dam'?'selected':''}" data-theme-choice="dam"><span class="theme-preview dam-preview"><i></i><b></b><b></b><b></b></span><strong>DAM WAO!風（ITSUKI風）</strong><small>これまでのITSUKIの黒背景・カラフルな大型ボタン表示です。</small></button></div><div class="theme-setting-note">設定はLocalStorageへ保存するため、公開サイトを更新してもこの端末では選択したテーマを維持します。旧「従来のITSUKI」設定は自動的にDAM WAO!風へ移行します。</div></section>`,`theme-settings-wrap`);
   document.querySelectorAll('[data-theme-choice]').forEach(btn=>btn.onclick=()=>{setTheme(btn.dataset.themeChoice);renderSettings()});
 }
-
 
 function route(){
   document.onkeydown=null;
