@@ -18,26 +18,31 @@ function topLinkShade(hex,amount=-34){
   const r=clamp((n>>16)+amount),g=clamp(((n>>8)&255)+amount),b=clamp((n&255)+amount);
   return '#'+[r,g,b].map(x=>x.toString(16).padStart(2,'0')).join('');
 }
-function topCustomLinksHtml(items){
+function topCustomLinksHtml(items,includeSettings=false){
   const links=(Array.isArray(items)?items:[]).filter(x=>x&&x.url&&x.label);
-  if(!links.length)return '';
-  return `<div class="top-custom-grid">${links.map(x=>{
+  if(!links.length&&!includeSettings)return '';
+  const buttons=links.map(x=>{
     const color=/^#[0-9a-f]{6}$/i.test(x.color||'')?x.color:'#4f8cff';
     return `<a class="category-btn top-custom-btn" href="${esc(x.url)}" target="_blank" rel="noopener noreferrer" style="background:linear-gradient(180deg,${color},${topLinkShade(color)})">${x.emoji?`<span class="category-icon">${esc(x.emoji)}</span>`:''}<span>${esc(x.label)}</span></a>`;
-  }).join('')}</div>`;
+  });
+  if(includeSettings)buttons.push(`<a class="category-btn top-custom-btn dam-display-shortcut" href="#settings"><span class="category-icon">⚙️</span><span>表示切替</span></a>`);
+  return `<div class="top-custom-grid${includeSettings?' has-display-shortcut':''}">${buttons.join('')}</div>`;
 }
 
 let DATA=null;
 const app=document.getElementById('app');
 const state={};
 const THEME_KEY='itsuki-web-theme';
-function currentTheme(){try{return localStorage.getItem(THEME_KEY)==='classic'?'classic':'joy'}catch(e){return 'joy'}}
+const THEMES=new Set(['joy','dam','classic']);
+function currentTheme(){
+  try{const saved=localStorage.getItem(THEME_KEY);return THEMES.has(saved)?saved:'joy'}catch(e){return 'joy'}
+}
 function applyTheme(theme){
-  const value=theme==='classic'?'classic':'joy';
+  const value=THEMES.has(theme)?theme:'joy';
   document.documentElement.dataset.theme=value;
   if(document.body)document.body.dataset.theme=value;
   const meta=document.querySelector('meta[name="theme-color"]');
-  if(meta)meta.content=value==='joy'?'#181818':'#111111';
+  if(meta)meta.content=value==='joy'?'#181818':'#0d0d0d';
   return value;
 }
 function setTheme(theme){const value=applyTheme(theme);try{localStorage.setItem(THEME_KEY,value)}catch(e){}return value}
@@ -45,8 +50,11 @@ applyTheme(currentTheme());
 
 function footer(){return `<div class="web-static-footer"><strong>ITSUKI Web Song Search</strong><br><span>最終データ更新: ${esc(DATA.generated_at||'')}</span></div>`}
 function joyHeader(){return `<nav class="joy-command-bar" aria-label="Web検索メニュー"><a class="joy-home-tab" href="#top"><strong>曲を選ぶ</strong><small>WEB検索 TOPへ</small></a><a href="#search/title">🎵 曲名</a><a href="#search/person">🎤 人物</a><a href="#tieup">🎞 タイアップ</a><a href="#feature/anime">📺 映像</a><a class="joy-reserve-tab" href="#updates">✨ 新譜</a><a class="joy-settings-tab" href="#settings">⚙ 表示</a></nav>`}
-function topNav(home=false){return `${joyHeader()}${home?'':`<div class="top nav common-user-nav classic-nav"><a class="navbtn" href="#top">🏠 TOP</a><a class="navbtn" href="#settings">⚙ 表示設定</a></div>`}`}
-function pageShell(inner, cls='web-static-page'){app.innerHTML=`<div class="wrap ${cls} joy-stage">${inner}${footer()}</div>`;window.scrollTo(0,0)}
+function topNav(home=false){return home?'':`<div class="top nav common-user-nav classic-nav"><a class="navbtn" href="#top">🏠 TOP</a><a class="navbtn" href="#settings">⚙ 表示設定</a></div>`}
+function pageShell(inner, cls='web-static-page'){
+  app.innerHTML=`<div class="wrap ${cls} joy-stage">${joyHeader()}${inner}${footer()}</div>`;
+  window.scrollTo(0,0);
+}
 
 function tieUpDisplay(s){
   if(!s)return '';
@@ -124,7 +132,7 @@ function renderTop(){
           <a class="category-btn top-middle-btn c-purple" href="#foreign"><span class="category-icon">🌐</span><span>外国曲</span></a>
           <a class="category-btn top-middle-btn c-blue" href="#all"><span class="category-icon">📚</span><span>全曲一覧</span></a>
         </div>
-        ${topCustomLinksHtml(DATA.home_links)}
+        ${topCustomLinksHtml(DATA.home_links,currentTheme()==='dam'||currentTheme()==='classic')}
       </section>
     </div>`);
 }
@@ -252,6 +260,7 @@ function renderSearch(initialMode='title',directPerson='',directRole=''){
   let selectedEntity='',selectedRole='',selectedRoleCounts={},selectedRelations=[],lastEntityQuery='',personTrail=[],lastSongResults=[],currentSongKanaBucket='';
   document.title=`ITSUKI - ${currentMode==='person'?'人物検索':modeLabels[currentMode]+'検索'}`;
   app.innerHTML=`<div class="wrap denmoku-page">
+    ${joyHeader()}
     <div class="denmoku-toolbar"><a class="denmoku-top-btn" href="#top">TOP</a><div class="denmoku-searchbox"><input id="searchInput" type="search" autocomplete="off" enterkeyhint="search" placeholder="検索語を入力"><button id="clearBtn" type="button" title="入力を消去">×</button></div><button id="searchBtn" class="denmoku-hit-btn" type="button"><span id="hitCount">0</span><small>Hits</small></button></div>
     <div id="searchTabs" class="denmoku-tabs" role="tablist" aria-label="検索対象"></div>
     <div id="featureFilterPanel" class="web-search-feature-filters" aria-label="曲の特徴で絞り込み" style="display:none"><span class="web-filter-title">絞り込み</span><button type="button" data-feature-filter="anime">アニメ・ゲーム映像</button><button type="button" data-feature-filter="tokusatsu">特撮映像</button><button type="button" data-feature-filter="live">ライブ映像</button><button type="button" data-feature-filter="parts">パート分け</button><small>複数選択はAND条件 / 4つすべてONで解除</small></div>
@@ -339,8 +348,7 @@ function renderFolderBrowser(){
     pageShell(`${topNav()}<div class="card bad"><div class="big">フォルダ一覧を作成できません</div><p>KaraokeLocalに動画ルートが設定され、動画スキャンが完了しているか確認してください。</p></div>`);
     return;
   }
-  app.innerHTML=`${joyHeader()}
-  <div class="digizo-browser-page web-folder-browser-page">
+  app.innerHTML=`<div class="digizo-browser-page web-folder-browser-page">
     <section class="digizo-browser-screen" aria-label="フォルダから探す">
       <div class="digizo-browser-head">
         <strong id="screenTitle">デバイス(すべて)</strong>
@@ -890,14 +898,18 @@ function renderUpdates(){
 function renderSettings(){
   document.title='ITSUKI - 表示設定';
   const selected=currentTheme();
-  pageShell(`${topNav()}<section class="theme-settings-page"><div class="theme-settings-head"><span class="theme-settings-back">表示</span><div><h1>表示テーマ</h1><p>この端末のブラウザにだけ保存されます。</p></div></div><div class="theme-choice-grid"><button type="button" class="theme-choice joy-choice ${selected==='joy'?'selected':''}" data-theme-choice="joy"><span class="theme-preview joy-preview"><i></i><b></b><b></b><b></b></span><strong>リモコン風</strong><small>白い一覧・赤い操作色・黒い上部バー。Web検索の標準デザインです。</small></button><button type="button" class="theme-choice classic-choice ${selected==='classic'?'selected':''}" data-theme-choice="classic"><span class="theme-preview classic-preview"><i></i><b></b><b></b><b></b></span><strong>従来のITSUKI</strong><small>これまでの黒背景・紫アクセントのデザインに戻します。</small></button></div><div class="theme-setting-note">設定はLocalStorageへ保存するため、公開サイトを更新してもこの端末では選択したテーマを維持します。</div></section>`,'theme-settings-wrap');
+  pageShell(`${topNav()}<section class="theme-settings-page"><div class="theme-settings-head"><span class="theme-settings-back">表示</span><div><h1>表示テーマ</h1><p>この端末のブラウザにだけ保存されます。</p></div></div><div class="theme-choice-grid theme-choice-main"><button type="button" class="theme-choice joy-choice ${selected==='joy'?'selected':''}" data-theme-choice="joy"><span class="theme-preview joy-preview"><i></i><b></b><b></b><b></b></span><strong>JOYSOUND風</strong><small>白い一覧・赤い操作色・全画面共通の上部操作帯を使います。</small></button><button type="button" class="theme-choice dam-choice ${selected==='dam'?'selected':''}" data-theme-choice="dam"><span class="theme-preview dam-preview"><i></i><b></b><b></b><b></b></span><strong>DAM WAO!風</strong><small>黒背景とカラフルな大型ボタンを中心にした表示です。</small></button></div><div class="theme-legacy-section"><div class="theme-legacy-title">旧テーマ</div><button type="button" class="theme-choice classic-choice compact ${selected==='classic'?'selected':''}" data-theme-choice="classic"><span class="theme-preview classic-preview"><i></i><b></b><b></b><b></b></span><span><strong>従来のITSUKI</strong><small>v0.7.0以前の黒背景・紫アクセント表示も残しています。</small></span></button></div><div class="theme-setting-note">設定はLocalStorageへ保存するため、公開サイトを更新してもこの端末では選択したテーマを維持します。</div></section>`,`theme-settings-wrap`);
   document.querySelectorAll('[data-theme-choice]').forEach(btn=>btn.onclick=()=>{setTheme(btn.dataset.themeChoice);renderSettings()});
 }
+
 
 function route(){
   document.onkeydown=null;
   const h=(location.hash||'#top').replace(/^#/,'');
   const parts=h.split('/'),a=parts[0]||'',b=parts[1]||'';
+  const folderView=a==='folder';
+  document.documentElement.dataset.folderView=folderView?'true':'false';
+  if(document.body)document.body.classList.toggle('folder-neutral',folderView);
   if(a==='top'||!a)return renderTop();
   if(a==='search')return renderSearch(b||'title');
   if(a==='person')return renderSearch('person',decodeURIComponent(b||''),decodeURIComponent(parts[2]||''));
