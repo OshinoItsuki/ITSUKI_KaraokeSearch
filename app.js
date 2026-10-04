@@ -603,6 +603,20 @@ function renderSongDetail(songId){
   const categoryLinks=categoryIds.map((id,i)=>({id,name:categoryNames[i]||id})).filter(x=>x.id);
   const fineCategory=categoryVals(song.tie_up_category_detail||song.tie_up_sub_category||'').filter(x=>x&&x!=='-').join(' / ');
   const lyricsQuery=encodeURIComponent([song.song_name,song.artists,'歌詞'].filter(Boolean).join(' '));
+  const lyricsArtist=(vals(song.artists)[0]||song.artists||'').toString().trim();
+  const utaTenParams=new URLSearchParams({
+    sort:'popular_sort:asc',
+    artist_name:lyricsArtist,
+    title:(song.song_name||'').toString().trim(),
+    beginning:'',
+    body:'',
+    sub_title:'',
+    tag:'',
+    lyricist:'',
+    composer:'',
+    show_artists:'1'
+  });
+  const utaTenLyricsUrl='https://utaten.com/search?'+utaTenParams.toString();
   const otherSongsHref=song.artists?entityHref('artist',song.artists):'';
   const infoValue=(html,empty='―')=>html&&String(html).trim()?html:`<span class="joy-song-info-empty">${empty}</span>`;
   const plainValues=values=>{const list=uniqueValues(values);return list.length?list.map(esc).join(' / '):''};
@@ -634,8 +648,8 @@ function renderSongDetail(songId){
         <div class="joy-song-summary-main">
           <h1>${esc(song.song_name||'曲名不明')}</h1>
           ${song.song_ruby?`<div class="joy-song-ruby">${esc(song.song_ruby)}</div>`:''}
-          <div class="joy-song-artist-line"><span class="joy-song-note-icon">♫</span><div>${detailLinkList('artist',artistLinks)}</div></div>
-          <div class="joy-song-lyrics-line"><span class="joy-song-lyrics-label">歌いだし歌詞</span><span class="joy-song-lyrics-placeholder">歌詞情報はWeb検索で確認</span><a class="joy-song-lyrics-search" href="https://www.google.com/search?q=${lyricsQuery}" target="_blank" rel="noopener noreferrer">🔎 歌詞を検索</a></div>
+          <div class="joy-song-artist-line"><span class="joy-song-note-icon">♫</span><div class="joy-song-artist-text">${esc(song.artists||'歌手情報なし')}</div></div>
+          <div class="joy-song-lyrics-line"><a class="joy-song-lyrics-search joy-song-lyrics-site" href="${esc(utaTenLyricsUrl)}" target="_blank" rel="noopener noreferrer" title="UtaTenで曲名・歌手名から歌詞を検索">♪ 歌詞検索</a><a class="joy-song-lyrics-search joy-song-lyrics-web" href="https://www.google.com/search?q=${lyricsQuery}" target="_blank" rel="noopener noreferrer" title="曲名・歌手名＋歌詞でWeb検索">🔎 Web検索</a></div>
         </div>
         <div class="joy-song-summary-actions">${otherSongsHref?`<a class="joy-other-artist-songs" href="${otherSongsHref}">この歌手の他の曲 <span>›</span></a>`:''}</div>
       </section>
