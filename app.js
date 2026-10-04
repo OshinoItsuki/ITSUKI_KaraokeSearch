@@ -30,10 +30,23 @@ function topCustomLinksHtml(items){
 let DATA=null;
 const app=document.getElementById('app');
 const state={};
+const THEME_KEY='itsuki-web-theme';
+function currentTheme(){try{return localStorage.getItem(THEME_KEY)==='classic'?'classic':'joy'}catch(e){return 'joy'}}
+function applyTheme(theme){
+  const value=theme==='classic'?'classic':'joy';
+  document.documentElement.dataset.theme=value;
+  if(document.body)document.body.dataset.theme=value;
+  const meta=document.querySelector('meta[name="theme-color"]');
+  if(meta)meta.content=value==='joy'?'#181818':'#111111';
+  return value;
+}
+function setTheme(theme){const value=applyTheme(theme);try{localStorage.setItem(THEME_KEY,value)}catch(e){}return value}
+applyTheme(currentTheme());
 
-function footer(){return `<div class="web-static-footer">ITSUKI Web Song Search<br><span>最終データ更新: ${esc(DATA.generated_at||'')}</span></div>`}
-function topNav(){return `<div class="top nav common-user-nav"><a class="navbtn" href="#top">🏠 TOP</a></div>`}
-function pageShell(inner, cls='web-static-page'){app.innerHTML=`<div class="wrap ${cls}">${inner}${footer()}</div>`;window.scrollTo(0,0)}
+function footer(){return `<div class="web-static-footer"><strong>ITSUKI Web Song Search</strong><br><span>最終データ更新: ${esc(DATA.generated_at||'')}</span></div>`}
+function joyHeader(){return `<nav class="joy-command-bar" aria-label="Web検索メニュー"><a class="joy-home-tab" href="#top"><strong>曲を選ぶ</strong><small>WEB検索 TOPへ</small></a><a href="#search/title">🎵 曲名</a><a href="#search/person">🎤 人物</a><a href="#tieup">🎞 タイアップ</a><a href="#feature/anime">📺 映像</a><a class="joy-reserve-tab" href="#updates">✨ 新譜</a><a class="joy-settings-tab" href="#settings">⚙ 表示</a></nav>`}
+function topNav(home=false){return `${joyHeader()}${home?'':`<div class="top nav common-user-nav classic-nav"><a class="navbtn" href="#top">🏠 TOP</a><a class="navbtn" href="#settings">⚙ 表示設定</a></div>`}`}
+function pageShell(inner, cls='web-static-page'){app.innerHTML=`<div class="wrap ${cls} joy-stage">${inner}${footer()}</div>`;window.scrollTo(0,0)}
 
 function tieUpDisplay(s){
   if(!s)return '';
@@ -89,6 +102,7 @@ function bindEntityClicks(root, list, fn){root.querySelectorAll('[data-key]').fo
 function renderTop(){
   document.title='ITSUKI - 曲検索';
   pageShell(`
+    ${topNav(true)}
     <div class="home-page top-menu-page">
       <div class="top home-title"><div><div class="big">🎤 ITSUKI</div><div class="home-subtitle">曲検索</div><div class="web-top-count">${nf(DATA.song_count)}曲 / ${nf(DATA.video_count)}動画</div></div><div class="web-static-meta">Web Song Search</div></div>
       <section class="category-section top-category-section">
@@ -325,7 +339,7 @@ function renderFolderBrowser(){
     pageShell(`${topNav()}<div class="card bad"><div class="big">フォルダ一覧を作成できません</div><p>KaraokeLocalに動画ルートが設定され、動画スキャンが完了しているか確認してください。</p></div>`);
     return;
   }
-  app.innerHTML=`
+  app.innerHTML=`${joyHeader()}
   <div class="digizo-browser-page web-folder-browser-page">
     <section class="digizo-browser-screen" aria-label="フォルダから探す">
       <div class="digizo-browser-head">
@@ -873,6 +887,13 @@ function renderUpdates(){
   renderCurrentWeek();
 }
 
+function renderSettings(){
+  document.title='ITSUKI - 表示設定';
+  const selected=currentTheme();
+  pageShell(`${topNav()}<section class="theme-settings-page"><div class="theme-settings-head"><span class="theme-settings-back">表示</span><div><h1>表示テーマ</h1><p>この端末のブラウザにだけ保存されます。</p></div></div><div class="theme-choice-grid"><button type="button" class="theme-choice joy-choice ${selected==='joy'?'selected':''}" data-theme-choice="joy"><span class="theme-preview joy-preview"><i></i><b></b><b></b><b></b></span><strong>リモコン風</strong><small>白い一覧・赤い操作色・黒い上部バー。Web検索の標準デザインです。</small></button><button type="button" class="theme-choice classic-choice ${selected==='classic'?'selected':''}" data-theme-choice="classic"><span class="theme-preview classic-preview"><i></i><b></b><b></b><b></b></span><strong>従来のITSUKI</strong><small>これまでの黒背景・紫アクセントのデザインに戻します。</small></button></div><div class="theme-setting-note">設定はLocalStorageへ保存するため、公開サイトを更新してもこの端末では選択したテーマを維持します。</div></section>`,'theme-settings-wrap');
+  document.querySelectorAll('[data-theme-choice]').forEach(btn=>btn.onclick=()=>{setTheme(btn.dataset.themeChoice);renderSettings()});
+}
+
 function route(){
   document.onkeydown=null;
   const h=(location.hash||'#top').replace(/^#/,'');
@@ -887,6 +908,7 @@ function route(){
   if(a==='tieup')return renderTieup();
   if(a==='era')return renderEra();
   if(a==='updates')return renderUpdates();
+  if(a==='settings')return renderSettings();
   if(a==='song')return renderSongDetail(decodeURIComponent(parts.slice(1).join('/')));
   if(a==='entity')return renderEntity(decodeURIComponent(b),decodeURIComponent(parts.slice(2).join('/')));
   renderTop();

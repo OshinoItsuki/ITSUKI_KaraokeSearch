@@ -1269,3 +1269,323 @@ button:disabled{opacity:.45;cursor:not-allowed}
 @media(max-width:700px){.denmoku-person-tree-children{margin-left:18px;padding-left:10px;gap:6px}.denmoku-person-tree-child{min-height:54px}.denmoku-person-tree-child .denmoku-entity-count{font-size:12px;white-space:nowrap}}
 @media(max-width:650px){.artist-name-filter{grid-template-columns:1fr auto}.artist-name-filter-label{grid-column:1 / -1}.artist-name-filter-input{height:40px;font-size:14px}.kana-jump{grid-template-columns:repeat(5,minmax(0,1fr))}}
 @media(max-width:600px){.denmoku-file-search-options{align-items:stretch;flex-direction:column}.denmoku-file-search-options>label{justify-content:space-between}}
+
+/* v0.7.0 - Web-only karaoke remote inspired theme ------------------------ */
+/* The classic ITSUKI theme remains untouched above.  These selectors only
+   activate when the per-browser theme is set to "joy". */
+html[data-theme="classic"] .joy-command-bar{display:none!important}
+html[data-theme="joy"] .classic-nav{display:none!important}
+
+html[data-theme="joy"]{background:#171717;color-scheme:light}
+html[data-theme="joy"] body{
+  background:#171717;
+  color:#222;
+  font-family:"Yu Gothic UI","Meiryo UI",Meiryo,system-ui,-apple-system,"Segoe UI",sans-serif;
+}
+html[data-theme="joy"] .wrap{
+  width:min(1180px,100%);
+  max-width:1180px;
+  min-height:100vh;
+  margin:0 auto;
+  padding:0 14px 18px;
+  background:#f5f5f3;
+  border-left:1px solid #303030;
+  border-right:1px solid #303030;
+  box-shadow:0 0 34px rgba(0,0,0,.5);
+}
+html[data-theme="joy"] a{color:#174d70}
+html[data-theme="joy"] button,
+html[data-theme="joy"] input,
+html[data-theme="joy"] select,
+html[data-theme="joy"] textarea{font-family:inherit}
+html[data-theme="joy"] input,
+html[data-theme="joy"] textarea,
+html[data-theme="joy"] select{
+  background:#fff;color:#222;border:1px solid #a8a8a8;border-radius:2px;
+  box-shadow:inset 0 1px 2px rgba(0,0,0,.08)
+}
+html[data-theme="joy"] .muted{color:#777}
+html[data-theme="joy"] .card{background:#fff;color:#222;border:1px solid #c9c9c9;border-radius:2px;box-shadow:none}
+
+/* top command strip */
+.joy-command-bar{display:none}
+html[data-theme="joy"] .joy-command-bar{
+  display:grid;
+  grid-template-columns:1.18fr repeat(6,minmax(82px,1fr));
+  min-height:67px;
+  margin:0 -14px 12px;
+  padding:0 12px;
+  align-items:stretch;
+  background:linear-gradient(180deg,#292929 0%,#171717 100%);
+  border-bottom:4px solid #d22a17;
+  box-shadow:0 3px 9px rgba(0,0,0,.28);
+  position:sticky;top:0;z-index:120;
+}
+html[data-theme="joy"] .joy-command-bar>a{
+  display:flex;align-items:center;justify-content:center;gap:6px;
+  min-width:0;padding:8px 9px;
+  color:#f7f7f7;text-decoration:none;text-align:center;
+  border-left:1px solid #555;border-right:1px solid #111;
+  font-size:15px;font-weight:900;line-height:1.08;
+  text-shadow:0 1px 1px #000;
+}
+html[data-theme="joy"] .joy-command-bar>a:hover{background:linear-gradient(180deg,#454545,#262626)}
+html[data-theme="joy"] .joy-command-bar .joy-home-tab{
+  flex-direction:column;gap:1px;background:linear-gradient(180deg,#e0331d,#a91c0f);border-color:#f05b49 #74120b #74120b #f05b49
+}
+html[data-theme="joy"] .joy-home-tab strong{font-size:19px;letter-spacing:.04em}
+html[data-theme="joy"] .joy-home-tab small{font-size:10px;color:#fff;font-weight:800}
+html[data-theme="joy"] .joy-command-bar .joy-reserve-tab{background:linear-gradient(180deg,#2f8e7d,#1b6459);border-color:#71cbb7 #11493f #11493f #71cbb7}
+html[data-theme="joy"] .joy-command-bar .joy-settings-tab{background:linear-gradient(180deg,#326985,#20485e);border-color:#6fa6c0 #193a4b #193a4b #6fa6c0}
+
+/* home */
+html[data-theme="joy"] .home-page{padding:2px 4px 0}
+html[data-theme="joy"] .home-title{
+  margin:4px 0 12px;padding:10px 14px;background:#fff;border:1px solid #c8c8c8;border-top:3px solid #cf2b1c;
+  color:#222;justify-content:space-between
+}
+html[data-theme="joy"] .home-title .big{font-size:27px;color:#b32013;letter-spacing:.02em}
+html[data-theme="joy"] .home-subtitle{color:#333;font-size:15px}
+html[data-theme="joy"] .web-top-count{color:#d13a58;font-weight:900;margin-top:4px}
+html[data-theme="joy"] .web-static-meta{color:#777;font-size:12px;font-weight:800}
+html[data-theme="joy"] .category-section{background:#efefed;border:1px solid #c8c8c8;padding:10px;border-radius:2px}
+html[data-theme="joy"] .top-main-grid{gap:9px;margin-bottom:9px}
+html[data-theme="joy"] .top-middle-grid{grid-template-columns:repeat(3,minmax(0,1fr));gap:7px;margin-bottom:9px}
+html[data-theme="joy"] .category-btn{
+  border-radius:3px!important;border:1px solid #9c9c9c!important;box-shadow:inset 0 1px 0 rgba(255,255,255,.85),0 1px 1px rgba(0,0,0,.08)!important;
+  text-shadow:none!important
+}
+html[data-theme="joy"] .top-main-btn{min-height:98px!important;font-size:21px!important}
+html[data-theme="joy"] .top-main-btn .category-icon{font-size:31px!important}
+html[data-theme="joy"] .top-middle-btn{min-height:76px!important;font-size:17px!important}
+html[data-theme="joy"] .top-custom-grid{margin:7px 0 0;gap:7px}
+html[data-theme="joy"] .top-custom-btn{border-radius:3px!important}
+
+/* generic page heading and back/list controls */
+html[data-theme="joy"] .browse-page,
+html[data-theme="joy"] .era-page,
+html[data-theme="joy"] .updates-page,
+html[data-theme="joy"] .denmoku-page,
+html[data-theme="joy"] .web-song-detail-page{padding-top:0}
+html[data-theme="joy"] .browse-header,
+html[data-theme="joy"] .era-head,
+html[data-theme="joy"] .updates-head{
+  margin:0 0 8px;padding:8px 12px 10px;border:0;border-bottom:1px solid #c7c7c7;border-radius:0;background:#f7f7f5;color:#222;box-shadow:none
+}
+html[data-theme="joy"] .browse-icon{display:none}
+html[data-theme="joy"] .browse-title,
+html[data-theme="joy"] .era-head h1{font-size:28px;color:#222;font-weight:700}
+html[data-theme="joy"] .browse-title::before,
+html[data-theme="joy"] .era-head h1::before{content:'← ';color:#c42a18;font-weight:500}
+html[data-theme="joy"] .browse-note,
+html[data-theme="joy"] .era-head p{color:#777}
+html[data-theme="joy"] .browse-entity-header,
+html[data-theme="joy"] .denmoku-entity-header{
+  color:#222;background:#f4f4f2;border:1px solid #c8c8c8;border-radius:2px;padding:7px 9px
+}
+html[data-theme="joy"] .browse-entity-header button,
+html[data-theme="joy"] .denmoku-entity-header button,
+html[data-theme="joy"] .denmoku-person-back{
+  background:#fff!important;color:#b52b1d!important;border:1px solid #c4c4c4!important;border-radius:2px!important;text-shadow:none
+}
+
+/* search page */
+html[data-theme="joy"] .denmoku-toolbar{
+  grid-template-columns:minmax(110px,auto) minmax(0,1fr) auto;
+  background:#efefed;border:1px solid #c8c8c8;border-bottom:0;padding:7px 8px
+}
+html[data-theme="joy"] .denmoku-top-btn{background:#fff;color:#b62b1c;border:1px solid #b6b6b6;border-radius:2px;box-shadow:none;text-shadow:none}
+html[data-theme="joy"] .denmoku-searchbox{border:1px solid #a8a8a8;border-radius:2px}
+html[data-theme="joy"] .denmoku-searchbox input{background:#fff!important;color:#222!important}
+html[data-theme="joy"] .denmoku-hit-btn{background:#f9f9f8;color:#d13b5e;border:1px solid #bdbdbd;border-radius:2px}
+html[data-theme="joy"] .denmoku-tabs{background:#f1f1ef;padding:0 8px;border-bottom:1px solid #bdbdbd;gap:4px}
+html[data-theme="joy"] .denmoku-tabs button{
+  min-height:43px;background:linear-gradient(180deg,#fff,#eeeeec);color:#b33a2c;border:1px solid #c9b0aa;border-bottom:0;border-radius:3px 3px 0 0;box-shadow:none;text-shadow:none
+}
+html[data-theme="joy"] .denmoku-tabs button.active{background:linear-gradient(180deg,#e23b22,#c52614);color:#fff;border-color:#c52614}
+html[data-theme="joy"] .denmoku-tabs button:disabled{background:#e9e9e7;color:#aaa;border-color:#d2d2d2;opacity:1}
+html[data-theme="joy"] .denmoku-subbar,
+html[data-theme="joy"] .denmoku-file-only,
+html[data-theme="joy"] .denmoku-artist-options,
+html[data-theme="joy"] .web-search-feature-filters{
+  background:#f5f5f3;color:#444;border:1px solid #c8c8c8;border-radius:0
+}
+html[data-theme="joy"] .denmoku-artist-options select,
+html[data-theme="joy"] .denmoku-file-search-options select{background:#fff;color:#222;border-color:#aaa}
+
+/* list area: flat white remote-screen rows */
+html[data-theme="joy"] .denmoku-results,
+html[data-theme="joy"] .browse-results{
+  min-height:48vh;padding:0;background:#fff;border:1px solid #c4c4c4;border-radius:0;gap:0;color:#222
+}
+html[data-theme="joy"] .denmoku-empty,
+html[data-theme="joy"] .browse-empty{background:#fff;color:#777;border:0;border-radius:0}
+html[data-theme="joy"] .denmoku-entity-row,
+html[data-theme="joy"] .denmoku-song-row{
+  width:100%;min-height:61px;margin:0;border:0;border-bottom:1px solid #d7d7d7;border-radius:0;background:#fff;color:#222;box-shadow:none;text-shadow:none
+}
+html[data-theme="joy"] .denmoku-entity-row:hover,
+html[data-theme="joy"] .denmoku-song-row:hover{background:#fff9ef}
+html[data-theme="joy"] .denmoku-entity-count{color:#d04162}
+html[data-theme="joy"] .denmoku-song-title{color:#222;font-weight:700}
+html[data-theme="joy"] .denmoku-song-artist{color:#23759a;font-weight:700}
+html[data-theme="joy"] .denmoku-song-meta{color:#777}
+html[data-theme="joy"] .web-song-row-link{color:#222;text-decoration:none}
+html[data-theme="joy"] .web-detail-open{color:#23759a}
+html[data-theme="joy"] .web-chip{background:#f2f2f0;color:#555;border-color:#c6c6c6}
+
+/* feature markers become narrow pictogram labels */
+html[data-theme="joy"] .web-list-feature-column{width:74px;min-width:74px;gap:2px}
+html[data-theme="joy"] .web-list-feature-tag{
+  width:74px;min-height:22px;border-radius:1px;background:transparent!important;color:#1495ad;border:0;font-size:10px;line-height:1.05
+}
+html[data-theme="joy"] .web-list-feature-tag.none{font-size:24px;color:#c9c9c9}
+html[data-theme="joy"] .web-list-feature-tag.live{color:#c3313a}
+html[data-theme="joy"] .web-list-feature-tag.parts{color:#9068a0}
+html[data-theme="joy"] .web-list-feature-tag.tokusatsu{color:#b87724}
+
+/* kana/filter controls */
+html[data-theme="joy"] .browse-sticky-area{background:#f3f3f1;border-radius:0;box-shadow:none;padding:0;margin:0 0 7px;backdrop-filter:none}
+html[data-theme="joy"] .tieup-filter-dock{background:#f3f3f1;border:1px solid #c8c8c8;border-radius:0;padding:6px}
+html[data-theme="joy"] .artist-name-filter-label{color:#555}
+html[data-theme="joy"] .artist-name-filter-input{background:#fff;color:#222;border-color:#aaa;border-radius:2px}
+html[data-theme="joy"] .artist-name-filter-input:focus{border-color:#d33a26;box-shadow:0 0 0 2px rgba(211,58,38,.10)}
+html[data-theme="joy"] .artist-name-filter-clear{background:#5b6670;color:#fff;border-color:#48525b;border-radius:2px}
+html[data-theme="joy"] .kana-jump{gap:3px}
+html[data-theme="joy"] .kana-jump button,
+html[data-theme="joy"] .web-tieup-detail-buttons button,
+html[data-theme="joy"] .web-tieup-kana-buttons button{
+  min-height:40px;background:#fff;color:#b92f20;border:1px solid #d1a9a2;border-radius:1px;box-shadow:none
+}
+html[data-theme="joy"] .kana-jump button.active,
+html[data-theme="joy"] .web-tieup-detail-buttons button.active,
+html[data-theme="joy"] .web-tieup-kana-buttons button.active{background:#d6331e;color:#fff;border-color:#ba2514;box-shadow:none}
+html[data-theme="joy"] .kana-jump button:disabled{background:#eee;color:#bbb;border-color:#ddd;opacity:1}
+html[data-theme="joy"] .web-tieup-filter-label{color:#555}
+html[data-theme="joy"] .web-tieup-sticky-filters{background:#f3f3f1;border-color:#c8c8c8;border-radius:0;backdrop-filter:none}
+
+/* person tree */
+html[data-theme="joy"] .denmoku-person-tree-children{border-left-color:#c7c7c7}
+html[data-theme="joy"] .denmoku-tree-arrow{color:#c42c1d}
+html[data-theme="joy"] .denmoku-person-role-summary{color:#777}
+html[data-theme="joy"] .denmoku-relation-badge{color:#d14a64}
+html[data-theme="joy"] .denmoku-person-relations{background:#f6f6f4;border:1px solid #ccc;color:#222}
+html[data-theme="joy"] .denmoku-relations-title{color:#555}
+html[data-theme="joy"] .denmoku-related-person{background:#fff;color:#222;border-color:#c4c4c4;border-radius:2px}
+html[data-theme="joy"] .denmoku-related-person small{color:#c43b55}
+html[data-theme="joy"] .denmoku-related-person:disabled,
+html[data-theme="joy"] .denmoku-related-person.is-disabled{background:#eee;color:#aaa;border-color:#ddd;filter:none}
+
+/* era */
+html[data-theme="joy"] .era-shell,
+html[data-theme="joy"] .era-panel{background:#fff;color:#222;border-color:#c5c5c5;border-radius:2px}
+html[data-theme="joy"] .web-era-mode button{background:#fff;color:#b63122;border:1px solid #caaba5;border-radius:2px}
+html[data-theme="joy"] .web-era-mode button.active{background:#d73720;color:#fff;border-color:#b92716}
+html[data-theme="joy"] .web-primary-btn{background:linear-gradient(180deg,#dc7714,#b95200)!important;color:#fff!important;border:1px solid #9f4700!important;border-radius:4px!important;box-shadow:inset 0 1px 0 rgba(255,255,255,.4)}
+html[data-theme="joy"] .web-era-range{color:#6d7881}
+html[data-theme="joy"] .web-number-step-buttons{background:#e7e7e5;border-left-color:#b9b9b9}
+html[data-theme="joy"] .web-number-step-buttons button{background:linear-gradient(180deg,#fefefe,#dcdcd9);color:#333;border-color:#bbb}
+
+/* updates */
+html[data-theme="joy"] .updates-week-nav{background:#f2f2f0;border-color:#c9c9c9}
+html[data-theme="joy"] .week-chip,
+html[data-theme="joy"] .week-arrow{background:#fff;color:#b52f20;border-color:#c8aaa5;border-radius:2px}
+html[data-theme="joy"] .week-chip.active{background:#d4331e;color:#fff;border-color:#bb2717}
+html[data-theme="joy"] .update-group{background:#fff;border:1px solid #c6c6c6;border-radius:0}
+html[data-theme="joy"] .update-group-title{background:#eee;color:#333;border-bottom:1px solid #c7c7c7}
+html[data-theme="joy"] .update-video-row{background:#fff;color:#222;border-bottom:1px solid #d8d8d8}
+html[data-theme="joy"] .update-song-title{color:#222}.updates-page .update-artist{color:#24769b}.updates-page .update-meta,.updates-page .update-file{color:#777}
+html[data-theme="joy"] .web-update-detail-btn{background:#fff;color:#b52e1f;border:1px solid #c6a49e;border-radius:2px}
+
+/* song detail */
+html[data-theme="joy"] .web-song-detail-card,
+html[data-theme="joy"] .reserve-song-card{background:#fff;color:#222;border:1px solid #c4c4c4;border-radius:2px;box-shadow:none}
+html[data-theme="joy"] .reserve-title,
+html[data-theme="joy"] .reserve-song-title-line{color:#222}
+html[data-theme="joy"] .reserve-artist-row{color:#24779b}
+html[data-theme="joy"] .reserve-core-cell,
+html[data-theme="joy"] .reserve-detail-cell{background:#fafafa;border-color:#d3d3d3;color:#222}
+html[data-theme="joy"] .reserve-detail-label{color:#c83d56}
+html[data-theme="joy"] .web-detail-entity-link,
+html[data-theme="joy"] .web-detail-year-link{background:#fff;color:#a52c21;border-color:#c8aaa4;border-radius:2px}
+html[data-theme="joy"] .web-video-paths{background:#fafafa;border-color:#ccc;color:#222}
+html[data-theme="joy"] .web-video-paths>summary>span:first-child{color:#c83c55}
+html[data-theme="joy"] .web-video-paths>summary>strong{color:#222}
+html[data-theme="joy"] .web-video-path-item{background:#fff;color:#444;border-color:#d1d1d1}
+html[data-theme="joy"] .web-video-path-list{background:#f5f5f3}
+
+/* footer */
+html[data-theme="joy"] .web-static-footer{color:#777;border-top:1px solid #ccc;margin-top:14px;padding-top:10px}
+html[data-theme="joy"] .web-static-footer strong{color:#555}
+
+/* theme settings */
+.theme-settings-page{max-width:820px;margin:10px auto 0}
+.theme-settings-head{display:flex;align-items:center;gap:14px;padding:13px 15px;margin-bottom:12px;border:1px solid #444;border-radius:12px;background:#191919}
+.theme-settings-head h1{margin:0 0 3px;font-size:25px}.theme-settings-head p{margin:0;color:#aaa;font-size:13px}.theme-settings-back{font-size:27px}
+.theme-choice-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+.theme-choice{display:grid;gap:9px;justify-items:start;padding:14px;text-align:left;border:2px solid #3e3e3e;border-radius:12px;background:#1c1c1c;color:#fff}
+.theme-choice.selected{border-color:#df63d2;box-shadow:0 0 0 2px rgba(223,99,210,.16)}
+.theme-choice strong{font-size:20px}.theme-choice small{color:#aaa;line-height:1.5}
+.theme-preview{width:100%;height:88px;display:grid;grid-template-columns:repeat(3,1fr);grid-template-rows:22px 1fr;gap:5px;padding:7px;border-radius:7px;overflow:hidden}
+.theme-preview i{grid-column:1/-1}.theme-preview b{display:block}
+.joy-preview{background:#efefed;border:1px solid #aaa}.joy-preview i{background:#222;border-bottom:3px solid #d52e1a}.joy-preview b{background:#fff;border:1px solid #bbb}.joy-preview b:first-of-type{border-top:5px solid #d52e1a}
+.classic-preview{background:#111;border:1px solid #444}.classic-preview i{background:#201421;border-bottom:3px solid #b33dac}.classic-preview b{background:#211923;border:1px solid #543a5d}.classic-preview b:first-of-type{border-top:5px solid #8c3988}
+.theme-setting-note{margin-top:12px;padding:11px 12px;border:1px solid #3c3c3c;border-radius:9px;background:#151515;color:#aaa;font-size:12px}
+html[data-theme="joy"] .theme-settings-head{background:#f4f4f2;border-color:#c8c8c8;color:#222;border-radius:2px}
+html[data-theme="joy"] .theme-settings-head p{color:#777}
+html[data-theme="joy"] .theme-settings-back{color:#c52e1e}
+html[data-theme="joy"] .theme-choice{background:#fff;color:#222;border:1px solid #bbb;border-radius:2px}
+html[data-theme="joy"] .theme-choice.selected{border:3px solid #d63520;box-shadow:none}
+html[data-theme="joy"] .theme-choice small{color:#666}
+html[data-theme="joy"] .theme-setting-note{background:#f4f4f2;color:#666;border-color:#c8c8c8;border-radius:2px}
+
+/* small screens */
+@media(max-width:820px){
+  html[data-theme="joy"] .wrap{padding:0 7px 12px}
+  html[data-theme="joy"] .joy-command-bar{margin:0 -7px 9px;padding:0 5px;grid-template-columns:1.25fr repeat(3,1fr);min-height:56px;overflow-x:auto;position:sticky}
+  html[data-theme="joy"] .joy-command-bar>a{min-width:92px;padding:6px 7px;font-size:12px;white-space:nowrap}
+  html[data-theme="joy"] .joy-home-tab strong{font-size:15px}
+  html[data-theme="joy"] .joy-home-tab small{font-size:8px}
+  html[data-theme="joy"] .top-middle-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+  html[data-theme="joy"] .top-main-btn{min-height:88px!important;font-size:18px!important}
+  html[data-theme="joy"] .denmoku-toolbar{grid-template-columns:auto minmax(0,1fr)}
+  html[data-theme="joy"] .denmoku-hit-btn{display:none}
+  html[data-theme="joy"] .denmoku-song-row{grid-template-columns:62px minmax(0,1fr)}
+  html[data-theme="joy"] .web-list-feature-column{width:62px;min-width:62px}
+  html[data-theme="joy"] .web-list-feature-tag{width:62px;font-size:9px}
+  html[data-theme="joy"] .web-song-count{grid-column:1/-1}
+  .theme-choice-grid{grid-template-columns:1fr}
+}
+@media(max-width:520px){
+  html[data-theme="joy"] .home-title .big{font-size:23px}
+  html[data-theme="joy"] .category-section{padding:7px}
+  html[data-theme="joy"] .top-main-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+  html[data-theme="joy"] .top-middle-grid{grid-template-columns:repeat(2,minmax(0,1fr))!important}
+  html[data-theme="joy"] .kana-jump{grid-template-columns:repeat(5,minmax(0,1fr))}
+  html[data-theme="joy"] .browse-title,html[data-theme="joy"] .era-head h1{font-size:23px}
+}
+
+/* JOY theme - folder browser keeps its explorer behavior but adopts the same screen language */
+html[data-theme="joy"] #app>.joy-command-bar{margin:0;padding:0 12px}
+html[data-theme="joy"] #app>.joy-command-bar + .web-folder-browser-page{height:calc(100dvh - 67px);min-height:460px}
+html[data-theme="joy"] .digizo-browser-page{background:#f1f1ef;color:#222;font-family:"Yu Gothic UI","Meiryo UI",Meiryo,sans-serif}
+html[data-theme="joy"] .digizo-browser-screen{background:#f5f5f3;text-shadow:none;padding-top:10px}
+html[data-theme="joy"] .digizo-browser-head{color:#222;border-bottom:1px solid #c7c7c7;font-weight:700}
+html[data-theme="joy"] .digizo-browser-head #itemCounter{color:#d13c5c}
+html[data-theme="joy"] .digizo-list-shell{background:#fff;border-radius:0;box-shadow:0 0 0 1px #c5c5c5;gap:5px}
+html[data-theme="joy"] .digizo-file-row{color:#222;text-shadow:none;border-radius:1px;border-width:1px;border-bottom:1px solid #ddd;margin:0;background:#fff}
+html[data-theme="joy"] .digizo-file-row:hover{background:#fff9ef}
+html[data-theme="joy"] .digizo-file-row.selected{color:#222;background:#fff0e8;border-color:#db4028;box-shadow:inset 5px 0 0 #d8321d}
+html[data-theme="joy"] .digizo-scrollbar{background:#252525;border-radius:1px;box-shadow:none}
+html[data-theme="joy"] .digizo-scrollbar span{background:#e6e6e3;border:1px solid #777;box-shadow:none}
+html[data-theme="joy"] .digizo-browser-foot{color:#555}
+html[data-theme="joy"] .digizo-edit-button{color:#b12b1d}
+html[data-theme="joy"] .digizo-edit-panel{background:#eee;border-color:#c5c5c5;border-radius:2px;box-shadow:none}
+html[data-theme="joy"] .digizo-edit-panel input,
+html[data-theme="joy"] .digizo-edit-panel select{background:#fff;color:#222;border-color:#aaa;border-radius:2px}
+html[data-theme="joy"] .digizo-browser-controls{background:#222;border-top:4px solid #cf2e1c;box-shadow:none}
+html[data-theme="joy"] .digizo-selection-info{background:#f8f8f6;color:#222;border-color:#aaa;border-radius:2px}
+html[data-theme="joy"] .digizo-dpad button,
+html[data-theme="joy"] .digizo-action-buttons button{background:linear-gradient(180deg,#4a4a4a,#262626);color:#fff;border-color:#666;border-radius:2px;box-shadow:none}
+html[data-theme="joy"] .digizo-dpad .pad-center,
+html[data-theme="joy"] .digizo-action-buttons button.primary{background:linear-gradient(180deg,#df7512,#b95100);border-color:#f5a14c;color:#fff}
