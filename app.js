@@ -598,7 +598,6 @@ function renderSongDetail(songId){
   const artistLinks=song.artists?[song.artists]:[];
   const tieDisplay=tieUpDisplay(song);
   const tags=uniqueValues(vals(song.tags));
-  const aliases=uniqueValues(vals(song.aliases));
   const categoryIds=vals(song.tie_up_category_id),categoryNames=vals(song.tie_up_category);
   const categoryLinks=categoryIds.map((id,i)=>({id,name:categoryNames[i]||id})).filter(x=>x.id);
   const fineCategory=categoryVals(song.tie_up_category_detail||song.tie_up_sub_category||'').filter(x=>x&&x!=='-').join(' / ');
@@ -637,7 +636,6 @@ function renderSongDetail(songId){
       infoRow('シリーズ',detailLinkList('series',vals(song.series))),
       infoRow('OP / ED',plainValues(song.op_ed?[song.op_ed]:[])),
       infoRow('タイアップ年',song.tie_up_release_year?`${esc(song.tie_up_release_year)}年`:''),
-      infoRow('別名・別表記',plainValues(aliases),true),
       infoRow('キーワード',plainValues(vals(song.song_keyword)),true),
       infoRow('タグ',plainValues(tags),true),
       infoRow('公開情報',plainValues(uniqueValues(badges)),true),
@@ -679,7 +677,6 @@ function renderSongDetail(songId){
           ${detailCell('シリーズ','series',vals(song.series))}
           ${detailCell('OP / ED',null,song.op_ed?[song.op_ed]:[])}
           ${detailCell('タイアップ年',null,song.tie_up_release_year?[`${song.tie_up_release_year}年`]:[])}
-          ${detailCell('別名・別表記',null,aliases,true)}
           ${detailCell('キーワード',null,vals(song.song_keyword),true)}
         </div>
         ${tieDisplay?`<div class="web-detail-tie-summary">🎞️ ${esc(tieDisplay)}</div>`:''}
