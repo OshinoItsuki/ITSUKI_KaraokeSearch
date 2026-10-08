@@ -48,7 +48,14 @@ function applyTheme(theme){
 function setTheme(theme){const value=applyTheme(theme);try{localStorage.setItem(THEME_KEY,value)}catch(e){}return value}
 applyTheme(currentTheme());
 
-function footer(){return `<div class="web-static-footer"><strong>ITSUKI Web Song Search</strong><br><span>最終データ更新: ${esc(DATA.generated_at||'')}</span></div>`}
+function formatGeneratedAt(value){
+  const raw=String(value||'').trim();if(!raw)return '更新日時不明';
+  const d=new Date(raw);if(Number.isNaN(d.getTime()))return raw;
+  const parts=new Intl.DateTimeFormat('ja-JP',{timeZone:'Asia/Tokyo',year:'numeric',month:'numeric',day:'numeric',hour:'2-digit',minute:'2-digit',second:'2-digit',hour12:false}).formatToParts(d);
+  const get=t=>parts.find(x=>x.type===t)?.value||'';
+  return `${get('year')}年${Number(get('month'))}月${Number(get('day'))}日　${Number(get('hour'))}時${get('minute')}分${get('second')}秒更新`;
+}
+function footer(){return `<div class="web-static-footer"><strong>ITSUKI Web Song Search</strong><br><span>${esc(formatGeneratedAt(DATA.generated_at))}</span></div>`}
 function joyHeader(){return `<nav class="joy-command-bar" aria-label="Web検索メニュー"><a class="joy-home-tab" href="#top"><strong>曲を選ぶ</strong><small>WEB検索 TOPへ</small></a><a href="#search/title">🎵 曲名</a><a href="#search/person">🎤 人物</a><a href="#tieup">🎞 タイアップ</a><a href="#feature/anime">📺 映像</a><a class="joy-reserve-tab" href="#updates">✨ 新譜</a><a class="joy-settings-tab" href="#settings">⚙ 表示</a></nav>`}
 function topNav(home=false){return home?'':`<div class="top nav common-user-nav classic-nav"><a class="navbtn" href="#top">🏠 TOP</a><a class="navbtn" href="#settings">⚙ 表示設定</a></div>`}
 function pageShell(inner, cls='web-static-page'){
@@ -99,8 +106,12 @@ function songRow(s){
 function renderSongList(target, list, empty='該当する曲がありません', limit=300){
   target.innerHTML='';
   if(!list.length){target.innerHTML=`<div class="denmoku-empty">${esc(empty)}</div>`;return}
-  const shown=list.slice(0,limit);
-  target.innerHTML=shown.map(songRow).join('')+(list.length>limit?`<div class="web-result-note">${nf(list.length)}曲中、先頭${nf(limit)}曲を表示しています。検索語を追加して絞り込んでください。</div>`:'');
+  // Centralize KaraokeLocal v1.3.0's result-order rule so every static song
+  // list behaves the same: mixed artists -> artist 50-on then song reading;
+  // one credited artist -> song reading only.
+  const ordered=sortSongsByReading(list);
+  const shown=ordered.slice(0,limit);
+  target.innerHTML=shown.map(songRow).join('')+(ordered.length>limit?`<div class="web-result-note">${nf(ordered.length)}曲中、先頭${nf(limit)}曲を表示しています。検索語を追加して絞り込んでください。</div>`:'');
 }
 function entityRows(list, clickFn){
   return list.map(x=>`<button type="button" class="denmoku-entity-row web-linklike" data-key="${esc(x.key)}"><span><strong>${esc(x.name)}</strong>${x.sub?`<small class="web-entity-sub">${esc(x.sub)}</small>`:''}</span><span class="denmoku-entity-count">${nf(x.count)}曲　›</span></button>`).join('');
@@ -144,8 +155,28 @@ function peopleArray(){return Array.isArray(DATA.people)?DATA.people:[]}
 function peopleMap(){const m=new Map();for(const p of peopleArray())m.set(norm(p.name),p);return m}
 function roleCounts(p){const out={};for(const r of roleOrder)out[r]=Array.isArray(p?.roles?.[r])?p.roles[r].length:0;return out}
 function personTotalCount(p){const ids=new Set();for(const r of roleOrder)for(const id of (p?.roles?.[r]||[]))ids.add(String(id));return ids.size}
-function songReadingKey(s){return hira(String(s?.song_ruby||s?.song_name||''))+'\u0000'+hira(String(s?.song_name||''))}
-function sortSongsByReading(list){return [...(list||[])].sort((a,b)=>songReadingKey(a).localeCompare(songReadingKey(b),'ja'))}
+function songReadingKey(s){
+  const filename=String(s?.filename||'').replace(/\.[^.]+$/,'');
+  const title=String(s?.song_name||filename||'').trim();
+  const reading=String(s?.song_ruby||title).trim();
+  return hira(reading)+'\u0000'+hira(title)+'\u0000'+String(s?.filename||'')+'\u0000'+String(s?.id||s?.song_id||'');
+}
+function artistReadingKey(s){
+  const artist=String(s?.artists||'').trim();
+  const reading=String(s?.artist_rubies||'').trim();
+  return `${artist?'0':'1'}\u0000${hira(reading||artist)}\u0000${artist}`;
+}
+function sortSongsByReading(list){
+  const rows=[...(list||[])];
+  const artists=new Set(rows.map(s=>norm(String(s?.artists||'').trim())).filter(Boolean));
+  // KaraokeLocal v1.3.0: only lists that actually mix credited artists are
+  // grouped by singer 50-on order. Artist-scoped pages keep song-reading order.
+  rows.sort((a,b)=>{
+    if(artists.size>1){const ar=artistReadingKey(a).localeCompare(artistReadingKey(b),'ja');if(ar)return ar}
+    return songReadingKey(a).localeCompare(songReadingKey(b),'ja');
+  });
+  return rows;
+}
 function songsForIds(ids){const wanted=new Set((ids||[]).map(String));return sortSongsByReading(DATA.songs.filter(s=>wanted.has(String(s.id))))}
 function directNameMatch(name,q,mode){const n=norm(name);if(mode==='exact')return n===q;if(mode==='prefix')return n.startsWith(q);return n.includes(q)}
 function ordinaryPersonReason(p,q){
@@ -1018,11 +1049,7 @@ function renderUpdates(){
     }
     currentWeekIndex=Math.max(0,Math.min(currentWeekIndex,groups.length-1));
     const g=groups[currentWeekIndex];
-    const items=[...(g.items||[])].sort((a,b)=>{
-      const an=norm(a.song_name||String(a.filename||'').replace(/\.[^.]+$/,''));
-      const bn=norm(b.song_name||String(b.filename||'').replace(/\.[^.]+$/,''));
-      return an.localeCompare(bn,'ja')||norm(a.filename||'').localeCompare(norm(b.filename||''),'ja');
-    });
+    const items=sortSongsByReading(g.items||[]);
     period.textContent=`${g.label} / ${nf(items.length)}動画`;
     root.innerHTML=`<section class="update-group single-week"><div class="update-group-title">${esc(g.label)}</div><div class="update-group-list">${items.map(updateVideoRow).join('')}</div></section>`;
     renderWeekNav();
