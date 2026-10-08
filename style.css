@@ -1739,3 +1739,15 @@ html[data-theme="joy"] .era-target-select>span{color:#4a4540}
 html[data-theme="joy"] .era-target-buttons button{background:#fff;color:#b63122;border:1px solid #caaba5;border-radius:3px;box-shadow:none}
 html[data-theme="joy"] .era-target-buttons button.active{background:#d73720;color:#fff;border-color:#b92716}
 @media(max-width:700px){.era-target-select{grid-template-columns:1fr}.era-target-buttons{grid-template-columns:1fr}.era-target-select>span{text-align:center}}
+
+/* v0.7.8 - New/updated song artist headings (DAM WAO! / ITSUKI) */
+.update-artist-group{min-width:0}
+.update-artist-heading{margin:0;padding:11px 14px;border-left:5px solid #ed831f;border-bottom:1px solid #49413c;background:linear-gradient(90deg,#382615 0%,#191511 58%,#111 100%);color:#fff;font-size:18px;font-weight:900;line-height:1.3;overflow-wrap:anywhere}
+.update-artist-group+.update-artist-group .update-artist-heading{border-top:1px solid #393939}
+.update-artist-songs{display:grid}
+.update-artist-songs .update-video-row:last-child{border-bottom:1px solid #303030}
+/* JOYSOUND: same grouping, separate visual language */
+html[data-theme="joy"] .update-artist-heading{border-left:5px solid #d4331e;border-bottom:1px solid #c8c8c8;background:linear-gradient(90deg,#fff0ec,#f1f1f1);color:#91271b}
+html[data-theme="joy"] .update-artist-group+.update-artist-group .update-artist-heading{border-top:1px solid #c8c8c8}
+html[data-theme="joy"] .update-artist-songs .update-video-row:last-child{border-bottom:1px solid #d8d8d8}
+@media(max-width:720px){.update-artist-heading{font-size:16px;padding:10px 11px}}

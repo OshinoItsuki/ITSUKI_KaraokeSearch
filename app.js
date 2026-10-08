@@ -984,6 +984,23 @@ function updateVideoRow(v){
   const action=linked?`<div class="update-action"><a class="web-update-detail-btn" href="#song/${encodeURIComponent(v.song_id)}">曲詳細</a></div>`:'';
   return `<article class="update-video-row"><div class="update-video-main"><div class="update-song-title">${esc(title)}</div><div class="update-artist">${esc(artist)}${vocal}</div>${meta}<div class="update-file">${esc(file)}</div></div>${action}</article>`;
 }
+// Keep the v0.7.7 artist/song reading order; add a visible divider on artist changes.
+function updateArtistGroups(items){
+  const groups=[];
+  for(const video of items){
+    const name=String(video?.artists||'').trim()||'歌手情報なし';
+    const key=norm(name);
+    const last=groups[groups.length-1];
+    if(last&&last.key===key){last.items.push(video)}
+    else groups.push({key,name,items:[video]});
+  }
+  return groups;
+}
+function renderUpdateArtistGroups(items){
+  return updateArtistGroups(items).map(g=>
+    `<section class="update-artist-group"><h3 class="update-artist-heading">${esc(g.name)}</h3><div class="update-artist-songs">${g.items.map(updateVideoRow).join('')}</div></section>`
+  ).join('');
+}
 function renderUpdates(){
   document.title='ITSUKI - 新曲・更新曲';
   const days=Math.max(1,Math.min(60,Number(DATA.new_update_days||15)||15));
@@ -1051,7 +1068,7 @@ function renderUpdates(){
     const g=groups[currentWeekIndex];
     const items=sortSongsByReading(g.items||[]);
     period.textContent=`${g.label} / ${nf(items.length)}動画`;
-    root.innerHTML=`<section class="update-group single-week"><div class="update-group-title">${esc(g.label)}</div><div class="update-group-list">${items.map(updateVideoRow).join('')}</div></section>`;
+    root.innerHTML=`<section class="update-group single-week"><div class="update-group-title">${esc(g.label)}</div><div class="update-group-list">${renderUpdateArtistGroups(items)}</div></section>`;
     renderWeekNav();
   }
   function selectWeek(index){
