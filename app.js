@@ -118,15 +118,17 @@ function entityRows(list, clickFn){
 }
 function bindEntityClicks(root, list, fn){root.querySelectorAll('[data-key]').forEach(b=>b.onclick=()=>fn(list.find(x=>x.key===b.dataset.key)))}
 
-// Official creator shop links. These are ordinary outgoing links (not iframe embeds).
+// Exporter supplies an ordered catalog; images are stored under assets/shop/.
 function creatorShopHtml(){
-  return `<section class="creator-shop" aria-label="オリジナルグッズ・スタンプ">
-    <div class="creator-shop-heading"><span>🎁 オリジナルグッズ・スタンプ</span><small>公式販売ページ</small></div>
-    <div class="creator-shop-grid">
-      <a class="creator-shop-card" href="https://www.ttrinity.jp/product/6571552#7" target="_blank" rel="noopener noreferrer"><span class="creator-shop-icon" aria-hidden="true">👕</span><span class="creator-shop-text"><strong>さばんな3兄弟</strong><small>Tシャツトリニティでグッズを見る</small></span><span class="creator-shop-arrow" aria-hidden="true">↗</span></a>
-      <a class="creator-shop-card" href="https://store.line.me/stickershop/product/33515654/ja" target="_blank" rel="noopener noreferrer"><span class="creator-shop-icon" aria-hidden="true">💬</span><span class="creator-shop-text"><strong>犬こ屋LINEスタンプ</strong><small>LINE STOREでスタンプを見る</small></span><span class="creator-shop-arrow" aria-hidden="true">↗</span></a>
-    </div>
-  </section>`;
+  const items=Array.isArray(window.ITSUKI_SHOP_LINKS)?window.ITSUKI_SHOP_LINKS:[];
+  if(!items.length)return '';
+  const cards=items.map(item=>{
+    const href=String(item.url||'');
+    if(!/^https?:\/\//i.test(href))return '';
+    const thumb=item.image?`<img class="creator-shop-thumbnail" src="${esc(item.image)}" alt="" loading="lazy" onerror="this.style.display='none';this.nextElementSibling.style.display='grid'">`:'';
+    return `<a class="creator-shop-card" href="${esc(href)}" target="_blank" rel="noopener noreferrer">${thumb}<span class="creator-shop-icon" aria-hidden="true" style="${thumb?'display:none':''}">🛍️</span><span class="creator-shop-text"><strong>${esc(item.title||'販売ページ')}</strong><small>${esc(item.description||'販売ページを見る')}</small></span><span class="creator-shop-arrow" aria-hidden="true">↗</span></a>`;
+  }).join('');
+  return `<section class="creator-shop" aria-label="オリジナルグッズ・スタンプ"><div class="creator-shop-heading"><span>🎁 オリジナルグッズ・スタンプ</span><small>公式販売ページ</small></div><div class="creator-shop-grid">${cards}</div></section>`;
 }
 
 // AdMax ad is mounted only on TOP. Never insert it into search results or

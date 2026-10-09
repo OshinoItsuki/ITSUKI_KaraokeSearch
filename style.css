@@ -1781,3 +1781,8 @@ html[data-theme="joy"] .creator-shop-text small{color:#666}
 html[data-theme="joy"] .web-top-admax{border-color:#d2d2d2;border-radius:3px;background:#f4f4f4}
 html[data-theme="joy"] .web-top-admax-title{color:#666}
 @media(max-width:650px){.web-top-admax{margin:12px 0;padding:10px}}
+
+/* v0.7.12: product thumbnail cards */
+.creator-shop-thumbnail{display:block;width:82px;height:82px;object-fit:contain;flex:0 0 82px;border-radius:7px;background:rgba(255,255,255,.92)}
+html[data-theme="joy"] .creator-shop-thumbnail{background:#f8f8f8;border:1px solid #e1e1e1}
+@media(max-width:650px){.creator-shop-thumbnail{width:65px;height:65px;flex-basis:65px}}

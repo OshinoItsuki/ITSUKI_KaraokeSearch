@@ -1,0 +1,1 @@
+window.ITSUKI_SHOP_LINKS = [{"title":"さばんな3兄弟","description":"Tシャツトリニティでグッズを見る","url":"https://www.ttrinity.jp/product/6571552#7","image_url":"","image":"assets/shop/1.png"},{"title":"犬こ屋LINEスタンプ","description":"LINE STOREでスタンプを見る","url":"https://store.line.me/stickershop/product/33515654/ja","image_url":"","image":"assets/shop/2.png"}];
