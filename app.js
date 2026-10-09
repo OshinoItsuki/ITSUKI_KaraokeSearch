@@ -137,6 +137,22 @@ function creatorYoutubeHtml(){
   return `<section class="creator-youtube" aria-label="公式YouTubeチャンネル"><a class="creator-youtube-button" href="https://www.youtube.com/channel/UCEBuTXqgPftB6q36HtILlgA" target="_blank" rel="noopener noreferrer" aria-label="犬こ屋 公式YouTubeチャンネルを見る（新しいタブ）"><span class="creator-youtube-mark" aria-hidden="true"><svg viewBox="0 0 28 20" width="32" height="24" focusable="false"><rect x="0" y="0" width="28" height="20" rx="6" fill="currentColor"/><path d="M11 5.2L19 10L11 14.8Z" fill="#fff"/></svg></span><span class="creator-youtube-text"><strong>YouTube 公式チャンネル</strong><small>動画はこちらからチェック！</small></span><span class="creator-youtube-arrow" aria-hidden="true">↗</span></a></section>`;
 }
 
+
+// Voluntary support for video production and original software development.
+// Do not accept gift card codes on the site or add them to URLs / analytics.
+function creatorSupportHtml(){
+  return `<section class="creator-support" aria-label="制作・開発支援">
+    <div class="creator-support-heading"><span aria-hidden="true">🎁</span><strong>動画制作・ツール開発を応援する</strong></div>
+    <p class="creator-support-description">いただいたご支援は、動画制作や各種オリジナルツールの開発費用に役立てます！</p>
+    <p class="creator-support-note">Amazonギフトカードで少額から応援できるよ！ ご支援は任意です。</p>
+    <div class="creator-support-actions">
+      <a class="creator-support-amazon" href="https://www.amazon.co.jp/gift-cards/" target="_blank" rel="noopener noreferrer"><span aria-hidden="true">🎁</span> Amazonギフトカードを購入 <span aria-hidden="true">↗</span></a>
+      <a class="creator-support-x" href="https://x.com/Itsuki_karaoke" target="_blank" rel="noopener noreferrer"><span class="creator-support-x-icon" aria-hidden="true">𝕏</span> 忍野カラオケ製作所のDMへ <span aria-hidden="true">↗</span></a>
+    </div>
+    <p class="creator-support-instructions">購入したギフトコードは、X（@Itsuki_karaoke）のDMで送ってね。<strong>公開ポストやリプライには記載しないでください。</strong></p>
+  </section>`;
+}
+
 // AdMax ad is mounted only on TOP. Never insert it into search results or
 // create synthetic refreshes/impressions. Missing ad scripts do not block navigation.
 function mountTopAd(){
@@ -181,6 +197,7 @@ function renderTop(){
       </section>
       ${creatorShopHtml()}
       ${creatorYoutubeHtml()}
+      ${creatorSupportHtml()}
       ${topAdHtml()}
     </div>`);
   mountTopAd();
