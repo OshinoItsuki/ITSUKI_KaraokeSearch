@@ -1786,3 +1786,19 @@ html[data-theme="joy"] .web-top-admax-title{color:#666}
 .creator-shop-thumbnail{display:block;width:82px;height:82px;object-fit:contain;flex:0 0 82px;border-radius:7px;background:rgba(255,255,255,.92)}
 html[data-theme="joy"] .creator-shop-thumbnail{background:#f8f8f8;border:1px solid #e1e1e1}
 @media(max-width:650px){.creator-shop-thumbnail{width:65px;height:65px;flex-basis:65px}}
+
+/* v0.7.13: Official YouTube channel link shown on both TOP themes. */
+.creator-youtube{margin:10px 0 16px}
+.creator-youtube-button{display:flex;align-items:center;gap:14px;min-height:74px;padding:12px 17px;background:linear-gradient(110deg,#3b1b29,#291e37);border:1px solid #ad3443;border-left:5px solid #ff303e;border-radius:12px;color:#fff!important;text-decoration:none!important;transition:filter .15s,transform .15s}
+.creator-youtube-button:hover,.creator-youtube-button:focus-visible{filter:brightness(1.16);transform:translateY(-1px)}
+.creator-youtube-button:focus-visible{outline:3px solid #ffb75a;outline-offset:3px}
+.creator-youtube-mark{display:grid;place-items:center;flex:0 0 52px;width:52px;height:48px;border-radius:10px;background:rgba(255,255,255,.1);color:#ff2838}
+.creator-youtube-text{display:flex;flex:1;min-width:0;flex-direction:column;gap:4px;line-height:1.4}
+.creator-youtube-text strong{font-size:17px;font-weight:800}
+.creator-youtube-text small{font-size:12px;color:#e7c9cf}
+.creator-youtube-arrow{font-size:21px;opacity:.85}
+html[data-theme="joy"] .creator-youtube-button{background:#fff;border:1px solid #d5d5d5;border-left:5px solid #e32737;border-radius:3px;color:#252525!important;box-shadow:0 2px 3px rgba(0,0,0,.06)}
+html[data-theme="joy"] .creator-youtube-mark{background:#fff1f2;color:#e32737}
+html[data-theme="joy"] .creator-youtube-text small{color:#666}
+html[data-theme="joy"] .creator-youtube-button:focus-visible{outline-color:#d91f30}
+@media(max-width:650px){.creator-youtube{margin:8px 0 12px}.creator-youtube-button{gap:10px;padding:10px 12px;min-height:66px}.creator-youtube-mark{flex-basis:44px;width:44px;height:42px}.creator-youtube-text strong{font-size:15px}}

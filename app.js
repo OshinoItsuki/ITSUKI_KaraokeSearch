@@ -131,6 +131,12 @@ function creatorShopHtml(){
   return `<section class="creator-shop" aria-label="オリジナルグッズ・スタンプ"><div class="creator-shop-heading"><span>🎁 オリジナルグッズ・スタンプ</span><small>公式販売ページ</small></div><div class="creator-shop-grid">${cards}</div></section>`;
 }
 
+// The official YouTube channel is a direct external link, not a video embed.
+// Keep it independent of shop_links.json and only show it on TOP.
+function creatorYoutubeHtml(){
+  return `<section class="creator-youtube" aria-label="公式YouTubeチャンネル"><a class="creator-youtube-button" href="https://www.youtube.com/channel/UCEBuTXqgPftB6q36HtILlgA" target="_blank" rel="noopener noreferrer" aria-label="犬こ屋 公式YouTubeチャンネルを見る（新しいタブ）"><span class="creator-youtube-mark" aria-hidden="true"><svg viewBox="0 0 28 20" width="32" height="24" focusable="false"><rect x="0" y="0" width="28" height="20" rx="6" fill="currentColor"/><path d="M11 5.2L19 10L11 14.8Z" fill="#fff"/></svg></span><span class="creator-youtube-text"><strong>YouTube 公式チャンネル</strong><small>動画はこちらからチェック！</small></span><span class="creator-youtube-arrow" aria-hidden="true">↗</span></a></section>`;
+}
+
 // AdMax ad is mounted only on TOP. Never insert it into search results or
 // create synthetic refreshes/impressions. Missing ad scripts do not block navigation.
 function mountTopAd(){
@@ -174,6 +180,7 @@ function renderTop(){
         ${topCustomLinksHtml(DATA.home_links,currentTheme()==='dam')}
       </section>
       ${creatorShopHtml()}
+      ${creatorYoutubeHtml()}
       ${topAdHtml()}
     </div>`);
   mountTopAd();
