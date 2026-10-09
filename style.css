@@ -1751,3 +1751,33 @@ html[data-theme="joy"] .update-artist-heading{border-left:5px solid #d4331e;bord
 html[data-theme="joy"] .update-artist-group+.update-artist-group .update-artist-heading{border-top:1px solid #c8c8c8}
 html[data-theme="joy"] .update-artist-songs .update-video-row:last-child{border-bottom:1px solid #d8d8d8}
 @media(max-width:720px){.update-artist-heading{font-size:16px;padding:10px 11px}}
+
+/* v0.7.9: creator shop panels below the TOP selection menu */
+.creator-shop{margin:20px 0 18px;padding:14px;border:1px solid #54416a;border-radius:14px;background:rgba(30,21,49,.72)}
+.creator-shop-heading{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:10px;color:#ffcf8c;font-weight:900;font-size:17px}
+.creator-shop-heading small{font-size:11px;color:#b5a9c8;font-weight:700}
+.creator-shop-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.creator-shop-card{display:flex;align-items:center;gap:12px;min-width:0;padding:13px 14px;border-radius:10px;background:linear-gradient(145deg,#493766,#2b2241);border:1px solid #6d5988;color:#fff!important;text-decoration:none!important;transition:filter .15s}
+.creator-shop-card:hover,.creator-shop-card:focus-visible{filter:brightness(1.18)}
+.creator-shop-icon{display:grid;place-items:center;flex:0 0 49px;width:49px;height:49px;background:rgba(255,255,255,.13);border-radius:9px;font-size:26px}
+.creator-shop-text{display:flex;flex:1;min-width:0;flex-direction:column;gap:5px;line-height:1.35}
+.creator-shop-text strong{font-size:16px;overflow-wrap:anywhere}
+.creator-shop-text small{font-size:12px;color:#d6cde3}
+.creator-shop-arrow{font-size:20px;opacity:.8}
+html[data-theme="joy"] .creator-shop{background:#f4f4f4;border:1px solid #cfcfcf;border-radius:3px}
+html[data-theme="joy"] .creator-shop-heading{color:#353535;border-left:5px solid #e22636;padding-left:9px}
+html[data-theme="joy"] .creator-shop-heading small{color:#747474}
+html[data-theme="joy"] .creator-shop-card{border-radius:3px;background:#fff;border:1px solid #d2d2d2;border-left:4px solid #db2c39;color:#252525!important;box-shadow:0 2px 3px rgba(0,0,0,.06)}
+html[data-theme="joy"] .creator-shop-icon{background:#fff0f1}
+html[data-theme="joy"] .creator-shop-text small{color:#666}
+@media(max-width:650px){.creator-shop{padding:11px;margin:14px 0}.creator-shop-grid{grid-template-columns:1fr;gap:8px}.creator-shop-heading{font-size:15px}.creator-shop-card{padding:10px;gap:10px}.creator-shop-icon{flex-basis:42px;width:42px;height:42px;font-size:23px}}
+
+/* v0.7.11: Ninja AdMax is a single TOP-only advertising placement. */
+.web-top-admax{margin:16px 0 20px;padding:12px 14px;border:1px solid #54416a;border-radius:12px;background:rgba(30,21,49,.72);min-width:0}
+.web-top-admax-title{font-size:11px;color:#c5b8d2;margin-bottom:8px;font-weight:700}
+.web-top-admax-slot{min-height:0;max-width:100%;overflow:visible;text-align:center}
+.web-top-admax-slot iframe,.web-top-admax-slot img{max-width:100%}
+.web-top-admax-slot.admax-unavailable{display:none}
+html[data-theme="joy"] .web-top-admax{border-color:#d2d2d2;border-radius:3px;background:#f4f4f4}
+html[data-theme="joy"] .web-top-admax-title{color:#666}
+@media(max-width:650px){.web-top-admax{margin:12px 0;padding:10px}}

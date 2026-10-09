@@ -118,6 +118,32 @@ function entityRows(list, clickFn){
 }
 function bindEntityClicks(root, list, fn){root.querySelectorAll('[data-key]').forEach(b=>b.onclick=()=>fn(list.find(x=>x.key===b.dataset.key)))}
 
+// Official creator shop links. These are ordinary outgoing links (not iframe embeds).
+function creatorShopHtml(){
+  return `<section class="creator-shop" aria-label="オリジナルグッズ・スタンプ">
+    <div class="creator-shop-heading"><span>🎁 オリジナルグッズ・スタンプ</span><small>公式販売ページ</small></div>
+    <div class="creator-shop-grid">
+      <a class="creator-shop-card" href="https://www.ttrinity.jp/product/6571552#7" target="_blank" rel="noopener noreferrer"><span class="creator-shop-icon" aria-hidden="true">👕</span><span class="creator-shop-text"><strong>さばんな3兄弟</strong><small>Tシャツトリニティでグッズを見る</small></span><span class="creator-shop-arrow" aria-hidden="true">↗</span></a>
+      <a class="creator-shop-card" href="https://store.line.me/stickershop/product/33515654/ja" target="_blank" rel="noopener noreferrer"><span class="creator-shop-icon" aria-hidden="true">💬</span><span class="creator-shop-text"><strong>犬こ屋LINEスタンプ</strong><small>LINE STOREでスタンプを見る</small></span><span class="creator-shop-arrow" aria-hidden="true">↗</span></a>
+    </div>
+  </section>`;
+}
+
+// AdMax ad is mounted only on TOP. Never insert it into search results or
+// create synthetic refreshes/impressions. Missing ad scripts do not block navigation.
+function mountTopAd(){
+  const slot=document.getElementById('itsuki-top-admax-slot');
+  if(!slot)return;
+  const script=document.createElement('script');
+  script.src='https://adm.shinobi.jp/s/7b255a8a84e1a99b2cf3daf98e0e89b8';
+  script.async=true;
+  script.onerror=()=>{slot.classList.add('admax-unavailable')};
+  slot.appendChild(script);
+}
+function topAdHtml(){
+  return `<section class="web-top-admax" aria-label="スポンサー広告"><div class="web-top-admax-title">広告</div><div id="itsuki-top-admax-slot" class="web-top-admax-slot"></div></section>`;
+}
+
 function renderTop(){
   document.title='ITSUKI - 曲検索';
   pageShell(`
@@ -145,7 +171,10 @@ function renderTop(){
         </div>
         ${topCustomLinksHtml(DATA.home_links,currentTheme()==='dam')}
       </section>
+      ${creatorShopHtml()}
+      ${topAdHtml()}
     </div>`);
+  mountTopAd();
 }
 
 const modeLabels={person:'人物',artist:'歌手',lyricist:'作詞',composer:'作曲',arranger:'編曲',title:'曲名','tie-up':'タイアップ',keyword:'キーワード'};
