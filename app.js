@@ -144,9 +144,9 @@ function creatorSupportHtml(){
   return `<section class="creator-support" aria-label="制作・開発支援">
     <div class="creator-support-heading"><span aria-hidden="true">🎁</span><strong>動画制作・ツール開発を応援する</strong></div>
     <p class="creator-support-description">いただいたご支援は、動画制作や各種オリジナルツールの開発費用に役立てます！</p>
-    <p class="creator-support-note">Amazonギフトカードで少額から応援できるよ！ ご支援は任意です。</p>
+    <p class="creator-support-note">Amazonギフトカードで150円～（手数料なし）から応援できるよ！ ご支援は任意です。</p>
     <div class="creator-support-actions">
-      <a class="creator-support-amazon" href="https://www.amazon.co.jp/gift-cards/" target="_blank" rel="noopener noreferrer"><span aria-hidden="true">🎁</span> Amazonギフトカードを購入 <span aria-hidden="true">↗</span></a>
+      <a class="creator-support-amazon" href="https://www.amazon.co.jp/dp/B06X982RQ9?th=1&amp;gpo=150" target="_blank" rel="noopener noreferrer"><span aria-hidden="true">🎁</span> Amazonギフトカードを購入 <span aria-hidden="true">↗</span></a>
       <a class="creator-support-x" href="https://x.com/Itsuki_karaoke" target="_blank" rel="noopener noreferrer"><span class="creator-support-x-icon" aria-hidden="true">𝕏</span> 忍野カラオケ製作所のDMへ <span aria-hidden="true">↗</span></a>
     </div>
     <p class="creator-support-instructions">購入したギフトコードは、X（@Itsuki_karaoke）のDMで送ってね。<strong>公開ポストやリプライには記載しないでください。</strong></p>
