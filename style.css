@@ -2015,3 +2015,79 @@ html[data-theme="joy"] .denmoku-history-head{color:#555;border-color:#ddd}
 html[data-theme="joy"] .denmoku-history-item{color:#222!important}
 html[data-theme="joy"] .denmoku-history-item:hover{background:#f1e9e5!important}
 html[data-theme="joy"] .denmoku-history-clear{background:#e5e5e5!important;color:#222!important}
+
+
+/* v0.7.18 - prevent legacy result-grid and button styles from splitting rows */
+.denmoku-page .denmoku-results{
+  display:flex!important;flex-direction:column!important;align-items:stretch!important;
+  gap:5px;min-width:0;width:100%;
+}
+.denmoku-page .denmoku-results > *{min-width:0;max-width:100%;}
+.denmoku-page .denmoku-person-result-group{
+  display:block!important;width:100%;min-width:0;margin:0;
+}
+.denmoku-page .denmoku-person-group-row{
+  display:grid!important;grid-template-columns:minmax(0,1fr) 60px!important;
+  gap:6px;align-items:stretch!important;width:100%;min-width:0;
+}
+.denmoku-page .denmoku-person-group-row > .denmoku-group-toggle,
+.denmoku-page .denmoku-results > .artist-entity-row{
+  width:100%!important;max-width:none!important;min-width:0;
+  margin:0!important;min-height:49px!important;padding:8px 13px!important;
+  font-size:16px!important;line-height:1.25!important;
+}
+.denmoku-page .denmoku-person-group-row > .denmoku-group-toggle{
+  display:flex!important;flex-direction:row!important;align-items:center!important;
+  justify-content:space-between!important;gap:10px;text-align:left;
+}
+.denmoku-page .denmoku-group-toggle > .denmoku-person-tree-name{
+  display:flex!important;align-items:center!important;flex:1 1 auto;min-width:0;
+  gap:8px;flex-direction:row!important;flex-wrap:wrap;
+}
+.denmoku-page .denmoku-group-toggle .denmoku-person-role-summary{
+  display:none!important;
+}
+.denmoku-page .denmoku-group-toggle > .denmoku-entity-count{
+  flex:0 0 auto;margin-left:auto;padding-left:8px;font-size:12px!important;
+}
+.denmoku-page .denmoku-all-songs-btn{
+  display:flex!important;align-items:center!important;justify-content:center!important;
+  width:60px!important;min-width:60px!important;max-width:60px!important;
+  min-height:49px!important;height:auto!important;
+  margin:0!important;padding:4px!important;
+  border-radius:7px!important;font-size:11px!important;line-height:1.2!important;
+  white-space:nowrap!important;
+}
+.denmoku-page .denmoku-person-group-children{
+  width:calc(100% - 18px);margin:5px 0 3px 18px!important;min-width:0;
+}
+.denmoku-page .denmoku-person-tree,
+.denmoku-page .denmoku-person-tree-children{min-width:0;width:100%;}
+.denmoku-page .denmoku-person-tree .artist-entity-row,
+.denmoku-page .denmoku-person-group-children > .artist-entity-row{
+  width:100%!important;max-width:none!important;font-size:15px!important;
+  min-height:46px!important;padding:8px 12px!important;
+}
+.denmoku-page .denmoku-history-panel{
+  font-size:13px!important;line-height:1.35!important;
+}
+.denmoku-page .denmoku-history-head{
+  font-size:12px!important;min-height:31px;
+}
+.denmoku-page .denmoku-history-item{
+  font-family:inherit!important;font-size:14px!important;line-height:1.4!important;
+  font-weight:600!important;min-height:36px!important;max-height:42px!important;
+  letter-spacing:normal!important;padding:8px 12px!important;
+  display:block!important;text-align:left!important;
+}
+.denmoku-page .denmoku-history-clear{font-size:11px!important;line-height:1.2!important}
+@media(max-width:650px){
+  .denmoku-page .denmoku-person-group-row{grid-template-columns:minmax(0,1fr) 60px!important}
+  .denmoku-page .denmoku-group-toggle > .denmoku-person-tree-name{font-size:14px!important}
+  .denmoku-page .denmoku-entity-count{font-size:12px!important}
+  .denmoku-page .denmoku-person-group-children{width:calc(100% - 10px);margin-left:10px!important}
+}
+/* Preserve JOYSOUND style colors but apply the same grouping geometry. */
+html[data-theme="joy"] .denmoku-page .denmoku-all-songs-btn{
+  color:#fff;background:#b83223;border:1px solid #a52a1b;
+}
