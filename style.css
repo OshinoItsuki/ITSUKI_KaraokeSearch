@@ -1822,3 +1822,181 @@ html[data-theme="joy"] .creator-support-description{color:#303030}
 html[data-theme="joy"] .creator-support-note,html[data-theme="joy"] .creator-support-instructions{color:#666}
 html[data-theme="joy"] .creator-support-instructions strong{color:#ac2632}
 @media(max-width:650px){.creator-support{padding:13px 12px}.creator-support-heading{font-size:16px}.creator-support-actions{flex-direction:column}.creator-support-actions a{width:100%;min-height:46px}}
+
+
+/* v0.7.16: align DAM-style person search closer to KaraokeLocal main UI */
+html[data-theme="dam"] .denmoku-toolbar{
+  grid-template-columns:auto auto minmax(0,1fr) auto;
+  align-items:center;
+  gap:8px;
+  padding:8px 10px;
+  border-bottom:1px solid #df4dd0;
+  background:#040404;
+}
+html[data-theme="dam"] .denmoku-top-btn{
+  min-width:54px;
+  height:38px;
+  padding:0 14px;
+  border-radius:12px;
+  border:1px solid #c0f383;
+  background:linear-gradient(180deg,#60ab22,#2e720d);
+  color:#fff;
+  font-weight:800;
+}
+html[data-theme="dam"] .denmoku-remote-btn{
+  min-width:56px;
+  height:38px;
+  padding:0 14px;
+  border-radius:12px;
+  border:1px solid #8bc7ff;
+  background:linear-gradient(180deg,#4e88de,#234f9c);
+  color:#fff;
+  font-weight:800;
+  opacity:1;
+  cursor:not-allowed;
+}
+html[data-theme="dam"] .denmoku-searchbox{
+  height:38px;
+  border-radius:4px;
+  border:1px solid #4b4b4b;
+  overflow:hidden;
+}
+html[data-theme="dam"] .denmoku-searchbox input{
+  font-size:15px;
+}
+html[data-theme="dam"] .denmoku-hit-btn{
+  width:56px;
+  min-width:56px;
+  height:38px;
+  border-radius:4px;
+  border:1px solid #666;
+  background:#ffffff;
+  color:#111;
+  padding:2px 4px;
+}
+html[data-theme="dam"] .denmoku-hit-btn span{
+  font-size:18px;
+  line-height:1;
+}
+html[data-theme="dam"] .denmoku-hit-btn small{
+  font-size:10px;
+  color:#333;
+}
+html[data-theme="dam"] .denmoku-subbar{
+  padding:7px 10px 10px;
+}
+html[data-theme="dam"] .denmoku-results{
+  gap:6px;
+  padding:12px 10px 10px;
+  background:#050505;
+}
+html[data-theme="dam"] .denmoku-entity-row{
+  min-height:50px;
+  padding:10px 14px;
+  border-radius:7px;
+  border:1px solid #454545;
+  background:linear-gradient(90deg,#0e0e0e 0%,#1a1a1a 45%,#121212 100%);
+  box-shadow:none;
+  font-size:18px;
+}
+html[data-theme="dam"] .artist-entity-row{
+  justify-content:space-between;
+}
+html[data-theme="dam"] .artist-entity-row>span:first-child{
+  display:flex;
+  flex-direction:column;
+  align-items:flex-start;
+  gap:2px;
+}
+html[data-theme="dam"] .denmoku-person-role-summary{
+  margin-top:2px;
+  color:#d0d0d0;
+  font-size:12px;
+  font-weight:700;
+}
+html[data-theme="dam"] .denmoku-person-result-group{
+  display:grid;
+  gap:0;
+}
+html[data-theme="dam"] .denmoku-person-group-row{
+  display:grid;
+  grid-template-columns:minmax(0,1fr) auto;
+  gap:6px;
+  align-items:stretch;
+}
+html[data-theme="dam"] .denmoku-group-toggle{
+  min-width:0;
+}
+html[data-theme="dam"] .denmoku-group-toggle .denmoku-person-tree-name{
+  display:flex;
+  align-items:center;
+  gap:10px;
+}
+html[data-theme="dam"] .denmoku-group-toggle .denmoku-tree-arrow{
+  color:#f0b7ff;
+  font-size:15px;
+  min-width:14px;
+}
+html[data-theme="dam"] .denmoku-all-songs-btn{
+  min-width:60px;
+  padding:0 12px;
+  border-radius:7px;
+  border:1px solid #9841af;
+  background:linear-gradient(180deg,#9340a5,#5f236d);
+  color:#fff;
+  font-size:12px;
+  font-weight:800;
+  cursor:pointer;
+}
+html[data-theme="dam"] .denmoku-all-songs-btn:disabled{
+  opacity:.55;
+  cursor:not-allowed;
+}
+html[data-theme="dam"] .denmoku-person-group-children{
+  display:grid;
+  gap:6px;
+  margin:6px 0 2px 18px;
+}
+html[data-theme="dam"] .denmoku-person-tree{
+  display:grid;
+  gap:6px;
+}
+html[data-theme="dam"] .denmoku-person-tree>.denmoku-entity-row,
+html[data-theme="dam"] .denmoku-person-tree-children>.denmoku-entity-row{
+  min-height:46px;
+  font-size:17px;
+}
+html[data-theme="dam"] .denmoku-person-tree-children{
+  display:grid;
+  gap:6px;
+  margin:6px 0 0 18px;
+  padding-left:10px;
+  border-left:1px solid #4a4a4a;
+}
+html[data-theme="dam"] .denmoku-entity-count{
+  color:#d7d7d7;
+  font-size:14px;
+  font-weight:800;
+}
+html[data-theme="dam"] .denmoku-group-toggle .denmoku-entity-count{
+  padding-left:10px;
+}
+html[data-theme="dam"] .denmoku-relation-badge{
+  margin-left:6px;
+  color:#ffb7d1;
+  font-size:.68em;
+}
+@media (max-width: 720px){
+  html[data-theme="dam"] .denmoku-toolbar{
+    grid-template-columns:auto auto minmax(0,1fr) auto;
+  }
+  html[data-theme="dam"] .denmoku-person-group-row{
+    grid-template-columns:minmax(0,1fr);
+  }
+  html[data-theme="dam"] .denmoku-all-songs-btn{
+    min-height:42px;
+  }
+}
+html[data-theme="joy"] .denmoku-remote-btn{
+  display:none;
+}

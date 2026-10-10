@@ -347,7 +347,7 @@ function renderSearch(initialMode='title',directPerson='',directRole=''){
   document.title=`ITSUKI - ${currentMode==='person'?'人物検索':modeLabels[currentMode]+'検索'}`;
   app.innerHTML=`<div class="wrap denmoku-page">
     ${joyHeader()}
-    <div class="denmoku-toolbar"><a class="denmoku-top-btn" href="#top">TOP</a><div class="denmoku-searchbox"><input id="searchInput" type="search" autocomplete="off" enterkeyhint="search" placeholder="検索語を入力"><button id="clearBtn" type="button" title="入力を消去">×</button></div><button id="searchBtn" class="denmoku-hit-btn" type="button"><span id="hitCount">0</span><small>Hits</small></button></div>
+    <div class="denmoku-toolbar"><a class="denmoku-top-btn" href="#top">TOP</a><button class="denmoku-remote-btn" type="button" disabled title="公開版では利用できません">リモコン</button><div class="denmoku-searchbox"><input id="searchInput" type="search" autocomplete="off" enterkeyhint="search" placeholder="検索語を入力"><button id="clearBtn" type="button" title="入力を消去">×</button></div><button id="searchBtn" class="denmoku-hit-btn" type="button"><span id="hitCount">0</span><small>Hits</small></button></div>
     <div id="searchTabs" class="denmoku-tabs" role="tablist" aria-label="検索対象"></div>
     <div id="featureFilterPanel" class="web-search-feature-filters" aria-label="曲の特徴で絞り込み" style="display:none"><span class="web-filter-title">絞り込み</span><button type="button" data-feature-filter="anime">アニメ・ゲーム映像</button><button type="button" data-feature-filter="tokusatsu">特撮映像</button><button type="button" data-feature-filter="live">ライブ映像</button><button type="button" data-feature-filter="parts">パート分け</button><small>複数選択はAND条件 / 4つすべてONで解除</small></div>
     <div class="denmoku-subbar"><div id="modeGuide">検索語を入力してEnterキーを押してください</div></div>
@@ -371,7 +371,70 @@ function renderSearch(initialMode='title',directPerson='',directRole=''){
   function applyMode(mode,run=false){currentMode=mode;selectedEntity='';selectedRole='';selectedRoleCounts={};selectedRelations=[];personTrail=[];lastSongResults=[];hidePersonKana();header.style.display='none';relationsBox.style.display='none';relationsBox.innerHTML='';renderMainTabs();syncFeatureVisibility();input.placeholder=modePlaceholders[mode]||'検索語を入力';modeGuide.textContent=['person','tie-up'].includes(mode)?`${modeLabels[mode]}を検索し、候補を選択してください`:`${modeLabels[mode]}だけを対象に検索します`;fileOnlyPanel.style.display=mode==='keyword'?'flex':'none';personOptions.style.display=mode==='person'?'flex':'none';if(mode!=='keyword')fileOnly.checked=false;fileSearchOptions.style.display=mode==='keyword'&&fileOnly.checked?'flex':'none';hit.textContent='0';if(run&&input.value.trim())doSearch();else results.innerHTML='<div class="denmoku-empty">検索語を入力してください</div>'}
   function personTreeLeaf(item){const count=Number(item?.count||0),selectable=item?.selectable!==false&&count>0,b=document.createElement('button');b.type='button';b.className='denmoku-entity-row artist-entity-row denmoku-person-tree-child'+(selectable?'':' no-songs');const relation=item?.relation_label?` <small class="denmoku-relation-badge">${esc(item.relation_label)}</small>`:'';b.innerHTML=`<span><span>${esc(item?.name||'')}${relation}</span></span><span class="denmoku-entity-count">${selectable?count+'曲':'登録曲なし'}　›</span>`;b.disabled=!selectable;if(selectable)b.onclick=()=>openPerson(item.name);return b}
   function personTreeBranch(item,isRoot=false){const children=item?.children||[];if(!children.length)return personTreeLeaf(item);const tree=document.createElement('div');tree.className='denmoku-person-tree'+(isRoot?' denmoku-person-tree-top':' denmoku-person-tree-nested');const root=document.createElement('button');root.type='button';root.className='denmoku-entity-row artist-entity-row denmoku-person-tree-root';const relation=item?.relation_label?` <small class="denmoku-relation-badge">${esc(item.relation_label)}</small>`:'';root.innerHTML=`<span class="denmoku-person-tree-name"><span class="denmoku-tree-arrow">▶</span><span>${esc(item?.name||'')}${relation}</span></span><span class="denmoku-entity-count">(${Number(item?.tree_count||0)||treePersonKeys(children).size}件)</span>`;const branch=document.createElement('div');branch.className='denmoku-person-tree-children';branch.hidden=true;for(const child of children)branch.appendChild(child?.children?.length?personTreeBranch(child):personTreeLeaf(child));root.onclick=()=>{const open=branch.hidden;branch.hidden=!open;root.querySelector('.denmoku-tree-arrow').textContent=open?'▼':'▶'};tree.append(root,branch);return tree}
-  function renderPersonEntities(list){hit.textContent=String(list.length);results.innerHTML='';if(!list.length){results.innerHTML='<div class="denmoku-empty">該当する人物が見つかりませんでした</div>';return}for(const x of list){if((x.children||[]).length>1){results.appendChild(personTreeBranch(x,true));continue}const target=(x.children||[])[0]||x,count=Number(target.count??x.count??0),b=document.createElement('button');b.type='button';b.className='denmoku-entity-row artist-entity-row';const counts=target.role_counts||{},active=roleOrder.filter(r=>Number(counts[r]||0)>0).map(r=>`${modeLabels[r]} ${counts[r]}`),relation=target.relation_label?` <small class="denmoku-relation-badge">${esc(target.relation_label)}</small>`:'';b.innerHTML=`<span><span>${esc(target.name||x.name)}${relation}</span>${active.length?`<small class="denmoku-person-role-summary">${esc(active.join(' / '))}</small>`:''}</span><span class="denmoku-entity-count">${count}曲　›</span>`;b.onclick=()=>openPerson(target.name||x.name);results.appendChild(b)}}
+  function renderPersonEntities(list){
+  hit.textContent=String(list.length);
+  results.innerHTML='';
+  if(!list.length){
+    results.innerHTML='<div class="denmoku-empty">候補が見つかりませんでした</div>';
+    return;
+  }
+  const makeLeafRow=(target)=>{
+    const counts=target.role_counts||{},active=roleSummaryLabels(counts),count=Number(target.count||0);
+    const relation=target.relation_label?`<small class="denmoku-relation-badge">${esc(target.relation_label)}</small>`:'';
+    const b=document.createElement('button');
+    b.type='button';
+    b.className='denmoku-entity-row artist-entity-row';
+    b.innerHTML=`<span><span>${esc(target.name||'')}${relation}</span>${active.length?`<small class="denmoku-person-role-summary">${esc(active.join(' / '))}</small>`:''}</span><span class="denmoku-entity-count">${count}曲　›</span>`;
+    if(target.selectable!==false)b.onclick=()=>openPerson(target.name||'');
+    else b.disabled=true;
+    results.appendChild(b);
+  };
+  const appendTreeChildren=(host,children)=>{
+    for(const child of children){
+      const node=(Array.isArray(child?.children)&&child.children.length)?personTreeBranch(child):personTreeLeaf(child);
+      host.appendChild(node);
+    }
+  };
+  for(const x of list){
+    const childList=Array.isArray(x.children)?x.children:[];
+    const target=childList[0]||x;
+    const hasNested=(childList.length>1)||Number(x.tree_count||0)>1;
+    if(!hasNested){
+      makeLeafRow(target);
+      continue;
+    }
+    const wrap=document.createElement('div');
+    wrap.className='denmoku-person-result-group';
+    const row=document.createElement('div');
+    row.className='denmoku-person-group-row';
+    const main=document.createElement('button');
+    main.type='button';
+    main.className='denmoku-entity-row artist-entity-row denmoku-group-toggle';
+    const relation=target.relation_label?`<small class="denmoku-relation-badge">${esc(target.relation_label)}</small>`:'';
+    const countText=`(${Number(x.tree_count||childList.length||0)}件)`;
+    main.innerHTML=`<span class="denmoku-person-tree-name"><span class="denmoku-tree-arrow">▶</span><span>${esc(target.name||x.name)}${relation}</span>${target.role_counts&&roleSummaryLabels(target.role_counts).length?`<small class="denmoku-person-role-summary">${esc(roleSummaryLabels(target.role_counts).join(' / '))}</small>`:''}</span><span class="denmoku-entity-count">${countText}</span>`;
+    const all=document.createElement('button');
+    all.type='button';
+    all.className='denmoku-all-songs-btn';
+    all.textContent='全曲表示';
+    if(target.selectable===false){
+      all.disabled=true;
+      all.title='登録曲がありません';
+    }else{
+      all.onclick=(e)=>{e.stopPropagation();openPerson(target.name||x.name);};
+    }
+    const detail=document.createElement('div');
+    detail.className='denmoku-person-group-children';
+    detail.style.display='none';
+    appendTreeChildren(detail, childList.slice(1));
+    let open=false;
+    const toggle=()=>{open=!open;detail.style.display=open?'grid':'none';const arrow=main.querySelector('.denmoku-tree-arrow');if(arrow)arrow.textContent=open?'▼':'▶';wrap.classList.toggle('open',open);};
+    main.onclick=toggle;
+    row.append(main,all);
+    wrap.append(row,detail);
+    results.appendChild(wrap);
+  }
+}
   function renderTieEntities(list){hit.textContent=String(list.length);if(!list.length){results.innerHTML='<div class="denmoku-empty">該当するタイアップが見つかりませんでした</div>';return}results.innerHTML=entityRows(list);bindEntityClicks(results,list,x=>openTieupEntity(x.name))}
   function renderPersonRelations(){if(!selectedRelations.length){relationsBox.style.display='none';return}relationsBox.innerHTML='<div class="denmoku-relations-title">別名義・所属人物</div><div class="denmoku-relations-list"></div>';const box=relationsBox.querySelector('.denmoku-relations-list');for(const x of selectedRelations){const p=pmap.get(norm(x.name)),count=p?personTotalCount(p):0,b=document.createElement('button');b.type='button';b.className='denmoku-related-person'+(count?'':' no-songs');b.innerHTML=`<span>${esc(x.name)}</span><small>${esc(x.relation||'関連人物')} / ${count?count+'曲':'登録曲なし'}</small>`;b.disabled=!count;if(count)b.onclick=()=>openPerson(x.name);box.appendChild(b)}relationsBox.style.display='block'}
   function closeRelations(){relationsBox.style.display='none'}
@@ -380,7 +443,49 @@ function renderSearch(initialMode='title',directPerson='',directRole=''){
   function backToPreviousPerson(){const prev=personTrail.pop();if(prev)openPerson(prev.name,prev.role||'','back')}
   function backToPersonSearch(){personTrail=[];hidePersonKana();selectedEntity='';selectedRole='';header.style.display='none';relationsBox.style.display='none';currentMode='person';renderMainTabs();syncFeatureVisibility();personOptions.style.display='flex';if(lastEntityQuery){input.value=lastEntityQuery;doSearch(false)}else{hit.textContent='0';results.innerHTML='<div class="denmoku-empty">検索語を入力してください</div>'}}
   function openTieupEntity(name){selectedEntity=name;syncFeatureVisibility();header.style.display='flex';header.innerHTML=`<button id="entityBack">${lastEntityQuery?`← ${esc(lastEntityQuery)} の検索結果`:'← タイアップ検索へ'}</button><strong>タイアップ：${esc(name)}</strong>`;header.querySelector('button').onclick=()=>lastEntityQuery?doSearch(false):(header.style.display='none');renderFilteredSongs(sortSongsByReading(DATA.songs.filter(s=>norm(s.tie_up)===norm(name))))}
-  function buildPersonSearchList(q,matchMode){const reasonRank={'':0,'連名':1,'別名義':2,'所属グループ':3,'所属メンバー':4,'関連人物':5},matched=new Map();for(const p of pmap.values()){const reason=personCandidateReason(p,q,matchMode,pmap);if(reason!==null)matched.set(norm(p.name),{name:p.name,count:personTotalCount(p),role_counts:roleCounts(p),reason})}const ordered=[...matched.keys()].sort((a,b)=>{const A=matched.get(a),B=matched.get(b);return (norm(A.name)===q?0:1)-(norm(B.name)===q?0:1)||(reasonRank[A.reason]??9)-(reasonRank[B.reason]??9)||A.name.localeCompare(B.name,'ja')});const entities=[],consumed=new Set();for(const key of ordered){if(consumed.has(key))continue;const item=matched.get(key),p=pmap.get(key);if(item.reason===''&&!p.combined_artist_credit){const family=buildPersonFamily(p.name,pmap,new Set(),0,new Set());const keys=treePersonKeys(family);for(const k of keys)consumed.add(k);entities.push({name:p.name,count:keys.size,tree_count:keys.size,children:family});}else{const leaf=personTreeLeafData(p.name,item.reason,pmap,p.combined_artist_credit?'combined':'single');entities.push({name:p.name,count:1,tree_count:1,children:[leaf]});consumed.add(key)}}return entities.slice(0,300)}
+  function buildPersonSearchList(q,matchMode){
+  const reasonRank={'':0,'連名':1,'別名義':2,'所属グループ':3,'所属メンバー':4,'関連人物':5};
+  const matched=[];
+  for(const p of pmap.values()){
+    const reason=personCandidateReason(p,q,matchMode,pmap);
+    if(reason!==null)matched.push({p,reason,key:norm(p.name)});
+  }
+  matched.sort((a,b)=>{
+    const A=a.p,B=b.p;
+    const exact=(norm(A.name)===q?0:1)-(norm(B.name)===q?0:1);
+    if(exact)return exact;
+    const combined=(A.combined_artist_credit?0:1)-(B.combined_artist_credit?0:1);
+    if(combined)return combined;
+    const reason=(reasonRank[a.reason]??9)-(reasonRank[b.reason]??9);
+    if(reason)return reason;
+    const count=personTotalCount(B)-personTotalCount(A);
+    if(count)return count;
+    return hira(A.name||'').localeCompare(hira(B.name||''),'ja');
+  });
+  const entities=[],consumed=new Set();
+  for(const item of matched){
+    const p=item.p,key=item.key;
+    if(consumed.has(key))continue;
+    const sharedClaimed=new Set(consumed);
+    let family=[];
+    try{
+      family=buildPersonFamily(p.name,pmap,new Set(),0,sharedClaimed).filter(Boolean);
+    }catch(_err){
+      family=[];
+    }
+    const leaf=personTreeLeafData(p.name,item.reason,pmap,p.combined_artist_credit?'combined':'single');
+    const hasTree=Array.isArray(family)&&family.length>1;
+    if(hasTree){
+      entities.push({name:p.name,count:leaf.count,tree_count:family.length,children:family});
+      for(const claimed of sharedClaimed)consumed.add(claimed);
+      consumed.add(key);
+    }else{
+      entities.push({name:p.name,count:1,tree_count:1,children:[leaf]});
+      consumed.add(key);
+    }
+  }
+  return entities.slice(0,300);
+}
   function fileMatch(v,raw){const fuzzy=fileFuzzy.checked,needle=fileSearchNorm(raw,fuzzy),mode=fileMatchMode.value;return fileSearchCandidates(v).some(c=>{const x=fileSearchNorm(c,fuzzy);if(mode==='exact')return x===needle;if(mode==='prefix')return x.startsWith(needle);if(mode==='suffix')return x.endsWith(needle);return x.includes(needle)})}
   function doSearch(storeQuery=true){const raw=input.value.trim(),q=norm(raw);if(!q){hit.textContent='0';return}if(storeQuery)lastEntityQuery=raw;personTrail=[];hidePersonKana();selectedEntity='';header.style.display='none';relationsBox.style.display='none';renderMainTabs();syncFeatureVisibility();personOptions.style.display=currentMode==='person'?'flex':'none';if(currentMode==='keyword'&&fileOnly.checked){renderFileSearchResults(results,flattenFolderFiles().filter(v=>fileMatch(v,raw)),hit);return}if(currentMode==='person'){renderPersonEntities(buildPersonSearchList(q,personMatch.value));return}if(currentMode==='tie-up'){const map=new Map();for(const s of DATA.songs){if(!s.tie_up||!norm([s.tie_up,s.tie_up_ruby,s.series].join(' ')).includes(q))continue;const k=norm(s.tie_up);if(!map.has(k))map.set(k,{key:k,name:s.tie_up,count:0,ids:new Set()});const e=map.get(k);e.ids.add(s.id);e.count=e.ids.size}renderTieEntities([...map.values()].sort((a,b)=>a.name.localeCompare(b.name,'ja')));return}const list=sortSongsByReading(DATA.songs.filter(s=>currentMode==='title'?norm([s.song_name,s.song_ruby,s.aliases].join(' ')).includes(q):norm([s.song_name,s.song_ruby,s.song_keyword,s.artists,s.lyricists,s.composers,s.arrangers,s.tags,s.tag_keywords,s.tie_up,s.tie_up_ruby,s.tie_up_category,s.tie_up_category_detail,s.tie_up_sub_category,s.series,s.op_ed,s.aliases].join(' ')).includes(q)));renderFilteredSongs(list)}
   document.getElementById('searchBtn').onclick=()=>doSearch();document.getElementById('clearBtn').onclick=()=>{input.value='';lastEntityQuery='';hidePersonKana();hit.textContent='0';results.innerHTML='<div class="denmoku-empty">検索語を入力してください</div>';input.focus()};input.onkeydown=e=>{if(e.key==='Enter'){e.preventDefault();doSearch()}};fileOnly.onchange=()=>{fileSearchOptions.style.display=fileOnly.checked?'flex':'none';if(input.value.trim())doSearch(false)};fileMatchMode.onchange=fileFuzzy.onchange=()=>{if(fileOnly.checked&&input.value.trim())doSearch(false)};personMatch.onchange=()=>{if(currentMode==='person'&&!selectedEntity&&input.value.trim())doSearch(false)};
