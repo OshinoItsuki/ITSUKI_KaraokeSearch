@@ -2091,3 +2091,38 @@ html[data-theme="joy"] .denmoku-history-clear{background:#e5e5e5!important;color
 html[data-theme="joy"] .denmoku-page .denmoku-all-songs-btn{
   color:#fff;background:#b83223;border:1px solid #a52a1b;
 }
+
+/* v0.7.20: readable video-type labels in JOYSOUND song results. */
+html[data-theme="joy"] .denmoku-song-row{
+  grid-template-columns:98px minmax(0,1fr) auto;
+}
+html[data-theme="joy"] .web-list-feature-column{
+  width:94px;
+  min-width:94px;
+  gap:5px;
+  align-items:stretch;
+}
+html[data-theme="joy"] .web-list-feature-tag{
+  width:94px;
+  min-height:29px;
+  padding:4px 3px;
+  font-size:14px;
+  line-height:1.2;
+  font-weight:800;
+  white-space:nowrap;
+}
+@media(max-width:650px){
+  html[data-theme="joy"] .denmoku-song-row{
+    grid-template-columns:90px minmax(0,1fr);
+  }
+  html[data-theme="joy"] .web-list-feature-column{
+    width:86px;
+    min-width:86px;
+  }
+  html[data-theme="joy"] .web-list-feature-tag{
+    width:86px;
+    min-height:27px;
+    padding:3px 2px;
+    font-size:12px;
+  }
+}

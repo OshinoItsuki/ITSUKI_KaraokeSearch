@@ -461,44 +461,56 @@ function renderSearch(initialMode='title',directPerson='',directRole=''){
   function backToPersonSearch(){personTrail=[];hidePersonKana();selectedEntity='';selectedRole='';header.style.display='none';relationsBox.style.display='none';currentMode='person';renderMainTabs();syncFeatureVisibility();personOptions.style.display='flex';if(lastEntityQuery){input.value=lastEntityQuery;doSearch(false)}else{hit.textContent='0';results.innerHTML='<div class="denmoku-empty">検索語を入力してください</div>'}}
   function openTieupEntity(name){selectedEntity=name;syncFeatureVisibility();header.style.display='flex';header.innerHTML=`<button id="entityBack">${lastEntityQuery?`← ${esc(lastEntityQuery)} の検索結果`:'← タイアップ検索へ'}</button><strong>タイアップ：${esc(name)}</strong>`;header.querySelector('button').onclick=()=>lastEntityQuery?doSearch(false):(header.style.display='none');renderFilteredSongs(sortSongsByReading(DATA.songs.filter(s=>norm(s.tie_up)===norm(name))))}
   function buildPersonSearchList(q,matchMode){
-  const reasonRank={'':0,'連名':1,'別名義':2,'所属グループ':3,'所属メンバー':4,'関連人物':5};
+  // ITSUKI main v1.3.13: display combined credits only under their
+  // matching solo/person root, never as an independent partial-match hit.
+  // A full credit can still be opened by exact-name search.
+  const reasonRank={'':0,'別名義':1,'所属グループ':2,'所属メンバー':3,'関連人物':4};
   const matched=[];
   for(const p of pmap.values()){
+    const key=norm(p.name);
+    if(p.combined_artist_credit){
+      if(matchMode==='exact'&&key===q){
+        matched.push({p,key,reason:'',explicitCombined:true});
+      }
+      continue;
+    }
     const reason=personCandidateReason(p,q,matchMode,pmap);
-    if(reason!==null)matched.push({p,reason,key:norm(p.name)});
+    // Relationship hits should be shown inside their matched root, not
+    // promoted into separate candidates merely because of a relative's name.
+    if(reason!==null&&(reason===''||directNameMatch(p.name,q,matchMode))){
+      matched.push({p,key,reason,explicitCombined:false});
+    }
   }
   matched.sort((a,b)=>{
-    const A=a.p,B=b.p;
-    const exact=(norm(A.name)===q?0:1)-(norm(B.name)===q?0:1);
+    const exact=(a.key===q?0:1)-(b.key===q?0:1);
     if(exact)return exact;
-    const combined=(A.combined_artist_credit?0:1)-(B.combined_artist_credit?0:1);
-    if(combined)return combined;
     const reason=(reasonRank[a.reason]??9)-(reasonRank[b.reason]??9);
     if(reason)return reason;
-    const count=personTotalCount(B)-personTotalCount(A);
-    if(count)return count;
-    return hira(A.name||'').localeCompare(hira(B.name||''),'ja');
+    return hira(a.p.ruby||a.p.name).localeCompare(hira(b.p.ruby||b.p.name),'ja');
   });
   const entities=[],consumed=new Set();
-  for(const item of matched){
-    const p=item.p,key=item.key;
+  for(const {p,key,reason,explicitCombined} of matched){
     if(consumed.has(key))continue;
-    const sharedClaimed=new Set(consumed);
-    let family=[];
-    try{
-      family=buildPersonFamily(p.name,pmap,new Set(),0,sharedClaimed).filter(Boolean);
-    }catch(_err){
-      family=[];
-    }
-    const leaf=personTreeLeafData(p.name,item.reason,pmap,p.combined_artist_credit?'combined':'single');
-    const hasTree=Array.isArray(family)&&family.length>1;
-    if(hasTree){
-      entities.push({name:p.name,count:leaf.count,tree_count:family.length,children:family});
-      for(const claimed of sharedClaimed)consumed.add(claimed);
-      consumed.add(key);
-    }else{
+    const leaf=personTreeLeafData(p.name,reason,pmap,explicitCombined?'combined':'single');
+    if(explicitCombined){
       entities.push({name:p.name,count:1,tree_count:1,children:[leaf]});
       consumed.add(key);
+      continue;
+    }
+    // Each independently matched solo name remains a candidate root.
+    // Claimed combined credits are children of the first matching root.
+    const claimed=new Set(consumed);
+    const family=buildPersonFamily(p.name,pmap,new Set(),0,claimed);
+    if(family.length>1){
+      entities.push({name:p.name,count:leaf.count,tree_count:treePersonKeys(family).size,children:family});
+    }else{
+      entities.push({name:p.name,count:1,tree_count:1,children:[leaf]});
+    }
+    consumed.add(key);
+    // Don't swallow a separate solo-name candidate merely because it is
+    // related to the current root; only consume combined credits.
+    for(const entry of treePersonKeys(family)){
+      if(pmap.get(entry)?.combined_artist_credit)consumed.add(entry);
     }
   }
   return entities.slice(0,300);
