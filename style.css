@@ -2000,3 +2000,18 @@ html[data-theme="dam"] .denmoku-relation-badge{
 html[data-theme="joy"] .denmoku-remote-btn{
   display:none;
 }
+
+/* v0.7.17: shared browser-local search history and unified clear control */
+.denmoku-searchbox{position:relative;overflow:visible!important}
+.denmoku-searchbox input[type=text]{appearance:none;min-width:0}
+.denmoku-history-panel{position:absolute;z-index:110;top:calc(100% + 4px);left:0;right:0;max-height:260px;overflow:auto;border:1px solid #765087;border-radius:7px;background:#16111d;box-shadow:0 10px 28px rgba(0,0,0,.65);color:#fff}
+.denmoku-history-panel[hidden]{display:none!important}
+.denmoku-history-head{display:flex;align-items:center;justify-content:space-between;padding:7px 10px;font-size:12px;color:#dcbce8;border-bottom:1px solid #4b3555}
+.denmoku-history-clear{padding:4px 9px!important;min-height:26px!important;border-radius:5px!important;background:#3b2e43!important;color:#fff!important;font-size:11px!important}
+.denmoku-history-item{display:block;width:100%;padding:9px 12px!important;border:0!important;border-radius:0!important;text-align:left;font-weight:600;background:transparent!important;color:#fff!important;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.denmoku-history-item:hover,.denmoku-history-item:focus-visible{background:#392547!important}
+html[data-theme="joy"] .denmoku-history-panel{background:#fff;color:#222;border-color:#c6c6c6;box-shadow:0 9px 18px #0003}
+html[data-theme="joy"] .denmoku-history-head{color:#555;border-color:#ddd}
+html[data-theme="joy"] .denmoku-history-item{color:#222!important}
+html[data-theme="joy"] .denmoku-history-item:hover{background:#f1e9e5!important}
+html[data-theme="joy"] .denmoku-history-clear{background:#e5e5e5!important;color:#222!important}

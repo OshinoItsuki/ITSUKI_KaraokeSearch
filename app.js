@@ -341,13 +341,27 @@ function renderFileSearchResults(target,list,hit){
     return song?`<a class="denmoku-song-row web-song-row-link" href="${songHref(song)}">${inner}</a>`:`<div class="denmoku-song-row">${inner}</div>`;
   }).join('')+(list.length>300?`<div class="web-result-note">${nf(list.length)}件中、先頭300件を表示しています。</div>`:'');
 }
+const SEARCH_HISTORY_KEY='itsuki-web-search-history-v1';
+const SEARCH_HISTORY_LIMIT=25;
+function getSearchHistory(){
+  try { const data=JSON.parse(localStorage.getItem(SEARCH_HISTORY_KEY)||'[]'); return Array.isArray(data)?data.filter(v=>v&&typeof v.term==='string'&&typeof v.mode==='string').slice(0,SEARCH_HISTORY_LIMIT):[]; }
+  catch(_err){return []}
+}
+function addSearchHistory(mode,term){
+  const q=String(term||'').trim();if(!q)return;
+  const old=getSearchHistory().filter(v=>!(v.mode===mode&&v.term===q));
+  old.unshift({mode,term:q});
+  try{localStorage.setItem(SEARCH_HISTORY_KEY,JSON.stringify(old.slice(0,SEARCH_HISTORY_LIMIT)))}catch(_err){}
+}
 function renderSearch(initialMode='title',directPerson='',directRole=''){
+  if(window.__itsukiSearchHistoryAbort)window.__itsukiSearchHistoryAbort.abort();
+  const searchHistoryAbort=new AbortController();window.__itsukiSearchHistoryAbort=searchHistoryAbort;
   let currentMode=['person','title','tie-up','keyword'].includes(initialMode)?initialMode:'title';
   let selectedEntity='',selectedRole='',selectedRoleCounts={},selectedRelations=[],lastEntityQuery='',personTrail=[],lastSongResults=[],currentSongKanaBucket='';
   document.title=`ITSUKI - ${currentMode==='person'?'人物検索':modeLabels[currentMode]+'検索'}`;
   app.innerHTML=`<div class="wrap denmoku-page">
     ${joyHeader()}
-    <div class="denmoku-toolbar"><a class="denmoku-top-btn" href="#top">TOP</a><button class="denmoku-remote-btn" type="button" disabled title="公開版では利用できません">リモコン</button><div class="denmoku-searchbox"><input id="searchInput" type="search" autocomplete="off" enterkeyhint="search" placeholder="検索語を入力"><button id="clearBtn" type="button" title="入力を消去">×</button></div><button id="searchBtn" class="denmoku-hit-btn" type="button"><span id="hitCount">0</span><small>Hits</small></button></div>
+    <div class="denmoku-toolbar"><a class="denmoku-top-btn" href="#top">TOP</a><button class="denmoku-remote-btn" type="button" disabled title="公開版では利用できません">リモコン</button><div class="denmoku-searchbox"><input id="searchInput" type="text" autocomplete="off" enterkeyhint="search" placeholder="検索語を入力" aria-controls="searchHistoryPanel" aria-expanded="false"><button id="clearBtn" type="button" title="検索語・検索結果をクリア" aria-label="検索語と検索結果をクリア">×</button><div id="searchHistoryPanel" class="denmoku-history-panel" hidden></div></div><button id="searchBtn" class="denmoku-hit-btn" type="button"><span id="hitCount">0</span><small>Hits</small></button></div>
     <div id="searchTabs" class="denmoku-tabs" role="tablist" aria-label="検索対象"></div>
     <div id="featureFilterPanel" class="web-search-feature-filters" aria-label="曲の特徴で絞り込み" style="display:none"><span class="web-filter-title">絞り込み</span><button type="button" data-feature-filter="anime">アニメ・ゲーム映像</button><button type="button" data-feature-filter="tokusatsu">特撮映像</button><button type="button" data-feature-filter="live">ライブ映像</button><button type="button" data-feature-filter="parts">パート分け</button><small>複数選択はAND条件 / 4つすべてONで解除</small></div>
     <div class="denmoku-subbar"><div id="modeGuide">検索語を入力してEnterキーを押してください</div></div>
@@ -371,6 +385,9 @@ function renderSearch(initialMode='title',directPerson='',directRole=''){
   function applyMode(mode,run=false){currentMode=mode;selectedEntity='';selectedRole='';selectedRoleCounts={};selectedRelations=[];personTrail=[];lastSongResults=[];hidePersonKana();header.style.display='none';relationsBox.style.display='none';relationsBox.innerHTML='';renderMainTabs();syncFeatureVisibility();input.placeholder=modePlaceholders[mode]||'検索語を入力';modeGuide.textContent=['person','tie-up'].includes(mode)?`${modeLabels[mode]}を検索し、候補を選択してください`:`${modeLabels[mode]}だけを対象に検索します`;fileOnlyPanel.style.display=mode==='keyword'?'flex':'none';personOptions.style.display=mode==='person'?'flex':'none';if(mode!=='keyword')fileOnly.checked=false;fileSearchOptions.style.display=mode==='keyword'&&fileOnly.checked?'flex':'none';hit.textContent='0';if(run&&input.value.trim())doSearch();else results.innerHTML='<div class="denmoku-empty">検索語を入力してください</div>'}
   function personTreeLeaf(item){const count=Number(item?.count||0),selectable=item?.selectable!==false&&count>0,b=document.createElement('button');b.type='button';b.className='denmoku-entity-row artist-entity-row denmoku-person-tree-child'+(selectable?'':' no-songs');const relation=item?.relation_label?` <small class="denmoku-relation-badge">${esc(item.relation_label)}</small>`:'';b.innerHTML=`<span><span>${esc(item?.name||'')}${relation}</span></span><span class="denmoku-entity-count">${selectable?count+'曲':'登録曲なし'}　›</span>`;b.disabled=!selectable;if(selectable)b.onclick=()=>openPerson(item.name);return b}
   function personTreeBranch(item,isRoot=false){const children=item?.children||[];if(!children.length)return personTreeLeaf(item);const tree=document.createElement('div');tree.className='denmoku-person-tree'+(isRoot?' denmoku-person-tree-top':' denmoku-person-tree-nested');const root=document.createElement('button');root.type='button';root.className='denmoku-entity-row artist-entity-row denmoku-person-tree-root';const relation=item?.relation_label?` <small class="denmoku-relation-badge">${esc(item.relation_label)}</small>`:'';root.innerHTML=`<span class="denmoku-person-tree-name"><span class="denmoku-tree-arrow">▶</span><span>${esc(item?.name||'')}${relation}</span></span><span class="denmoku-entity-count">(${Number(item?.tree_count||0)||treePersonKeys(children).size}件)</span>`;const branch=document.createElement('div');branch.className='denmoku-person-tree-children';branch.hidden=true;for(const child of children)branch.appendChild(child?.children?.length?personTreeBranch(child):personTreeLeaf(child));root.onclick=()=>{const open=branch.hidden;branch.hidden=!open;root.querySelector('.denmoku-tree-arrow').textContent=open?'▼':'▶'};tree.append(root,branch);return tree}
+  function roleSummaryLabels(counts){
+    return roleOrder.filter(r=>Number(counts?.[r]||0)>0).map(r=>`${modeLabels[r]} ${Number(counts[r])}`);
+  }
   function renderPersonEntities(list){
   hit.textContent=String(list.length);
   results.innerHTML='';
@@ -487,9 +504,39 @@ function renderSearch(initialMode='title',directPerson='',directRole=''){
   return entities.slice(0,300);
 }
   function fileMatch(v,raw){const fuzzy=fileFuzzy.checked,needle=fileSearchNorm(raw,fuzzy),mode=fileMatchMode.value;return fileSearchCandidates(v).some(c=>{const x=fileSearchNorm(c,fuzzy);if(mode==='exact')return x===needle;if(mode==='prefix')return x.startsWith(needle);if(mode==='suffix')return x.endsWith(needle);return x.includes(needle)})}
-  function doSearch(storeQuery=true){const raw=input.value.trim(),q=norm(raw);if(!q){hit.textContent='0';return}if(storeQuery)lastEntityQuery=raw;personTrail=[];hidePersonKana();selectedEntity='';header.style.display='none';relationsBox.style.display='none';renderMainTabs();syncFeatureVisibility();personOptions.style.display=currentMode==='person'?'flex':'none';if(currentMode==='keyword'&&fileOnly.checked){renderFileSearchResults(results,flattenFolderFiles().filter(v=>fileMatch(v,raw)),hit);return}if(currentMode==='person'){renderPersonEntities(buildPersonSearchList(q,personMatch.value));return}if(currentMode==='tie-up'){const map=new Map();for(const s of DATA.songs){if(!s.tie_up||!norm([s.tie_up,s.tie_up_ruby,s.series].join(' ')).includes(q))continue;const k=norm(s.tie_up);if(!map.has(k))map.set(k,{key:k,name:s.tie_up,count:0,ids:new Set()});const e=map.get(k);e.ids.add(s.id);e.count=e.ids.size}renderTieEntities([...map.values()].sort((a,b)=>a.name.localeCompare(b.name,'ja')));return}const list=sortSongsByReading(DATA.songs.filter(s=>currentMode==='title'?norm([s.song_name,s.song_ruby,s.aliases].join(' ')).includes(q):norm([s.song_name,s.song_ruby,s.song_keyword,s.artists,s.lyricists,s.composers,s.arrangers,s.tags,s.tag_keywords,s.tie_up,s.tie_up_ruby,s.tie_up_category,s.tie_up_category_detail,s.tie_up_sub_category,s.series,s.op_ed,s.aliases].join(' ')).includes(q)));renderFilteredSongs(list)}
-  document.getElementById('searchBtn').onclick=()=>doSearch();document.getElementById('clearBtn').onclick=()=>{input.value='';lastEntityQuery='';hidePersonKana();hit.textContent='0';results.innerHTML='<div class="denmoku-empty">検索語を入力してください</div>';input.focus()};input.onkeydown=e=>{if(e.key==='Enter'){e.preventDefault();doSearch()}};fileOnly.onchange=()=>{fileSearchOptions.style.display=fileOnly.checked?'flex':'none';if(input.value.trim())doSearch(false)};fileMatchMode.onchange=fileFuzzy.onchange=()=>{if(fileOnly.checked&&input.value.trim())doSearch(false)};personMatch.onchange=()=>{if(currentMode==='person'&&!selectedEntity&&input.value.trim())doSearch(false)};
-  applyMode(currentMode);if(directPerson&&currentMode==='person')openPerson(directPerson,directRole);else setTimeout(()=>input.focus(),30);
+  function doSearch(storeQuery=true){const raw=input.value.trim(),q=norm(raw);if(!q){hit.textContent='0';return}if(storeQuery){lastEntityQuery=raw;addSearchHistory(currentMode,raw)}personTrail=[];hidePersonKana();selectedEntity='';header.style.display='none';relationsBox.style.display='none';renderMainTabs();syncFeatureVisibility();personOptions.style.display=currentMode==='person'?'flex':'none';if(currentMode==='keyword'&&fileOnly.checked){renderFileSearchResults(results,flattenFolderFiles().filter(v=>fileMatch(v,raw)),hit);return}if(currentMode==='person'){renderPersonEntities(buildPersonSearchList(q,personMatch.value));return}if(currentMode==='tie-up'){const map=new Map();for(const s of DATA.songs){if(!s.tie_up||!norm([s.tie_up,s.tie_up_ruby,s.series].join(' ')).includes(q))continue;const k=norm(s.tie_up);if(!map.has(k))map.set(k,{key:k,name:s.tie_up,count:0,ids:new Set()});const e=map.get(k);e.ids.add(s.id);e.count=e.ids.size}renderTieEntities([...map.values()].sort((a,b)=>a.name.localeCompare(b.name,'ja')));return}const list=sortSongsByReading(DATA.songs.filter(s=>currentMode==='title'?norm([s.song_name,s.song_ruby,s.aliases].join(' ')).includes(q):norm([s.song_name,s.song_ruby,s.song_keyword,s.artists,s.lyricists,s.composers,s.arrangers,s.tags,s.tag_keywords,s.tie_up,s.tie_up_ruby,s.tie_up_category,s.tie_up_category_detail,s.tie_up_sub_category,s.series,s.op_ed,s.aliases].join(' ')).includes(q)));renderFilteredSongs(list)}
+  const historyPanel=document.getElementById('searchHistoryPanel');
+  function hideHistory(){historyPanel.hidden=true;input.setAttribute('aria-expanded','false')}
+  function showHistory(){
+    const entries=getSearchHistory().filter(x=>x.mode===currentMode);
+    if(!entries.length){hideHistory();return;}
+    historyPanel.innerHTML=`<div class="denmoku-history-head"><span>検索履歴</span><button type="button" class="denmoku-history-clear">履歴を削除</button></div>`;
+    for(const entry of entries){
+      const b=document.createElement('button');b.type='button';b.className='denmoku-history-item';
+      b.textContent=entry.term;b.title=entry.term;
+      b.onclick=()=>{input.value=entry.term;hideHistory();doSearch(false);input.focus()};
+      historyPanel.appendChild(b);
+    }
+    historyPanel.querySelector('.denmoku-history-clear').onclick=()=>{
+      const rest=getSearchHistory().filter(x=>x.mode!==currentMode);
+      try{localStorage.setItem(SEARCH_HISTORY_KEY,JSON.stringify(rest))}catch(_err){}
+      hideHistory();input.focus();
+    };
+    historyPanel.hidden=false;input.setAttribute('aria-expanded','true');
+  }
+  input.addEventListener('focus',showHistory);
+  input.addEventListener('input',hideHistory);
+  input.addEventListener('keydown',e=>{if(e.key==='Escape')hideHistory()});
+  document.addEventListener('pointerdown',e=>{if(!input.parentElement.contains(e.target))hideHistory()},{signal:searchHistoryAbort.signal});
+  document.getElementById('searchBtn').onclick=()=>doSearch();
+  document.getElementById('clearBtn').onclick=()=>{
+    input.value='';lastEntityQuery='';lastSongResults=[];personTrail=[];selectedEntity='';selectedRole='';selectedRelations=[];
+    hidePersonKana();hideHistory();header.style.display='none';relationsBox.style.display='none';
+    renderMainTabs();syncFeatureVisibility();personOptions.style.display=currentMode==='person'?'flex':'none';
+    hit.textContent='0';results.innerHTML='<div class="denmoku-empty">検索語を入力してください</div>';input.focus();
+  };
+  input.onkeydown=e=>{if(e.key==='Enter'){e.preventDefault();hideHistory();doSearch()}};fileOnly.onchange=()=>{fileSearchOptions.style.display=fileOnly.checked?'flex':'none';if(input.value.trim())doSearch(false)};fileMatchMode.onchange=fileFuzzy.onchange=()=>{if(fileOnly.checked&&input.value.trim())doSearch(false)};personMatch.onchange=()=>{if(currentMode==='person'&&!selectedEntity&&input.value.trim())doSearch(false)};
+  applyMode(currentMode);if(directPerson&&currentMode==='person')openPerson(directPerson,directRole);else setTimeout(()=>{input.focus();hideHistory()},30);
 }
 
 const featureDefs={
