@@ -443,7 +443,8 @@ function renderSearch(initialMode='title',directPerson='',directRole=''){
     const detail=document.createElement('div');
     detail.className='denmoku-person-group-children';
     detail.style.display='none';
-    appendTreeChildren(detail, childList.slice(1));
+    // The root person is the first selectable entry in the expanded tree.
+    appendTreeChildren(detail, childList);
     let open=false;
     const toggle=()=>{open=!open;detail.style.display=open?'grid':'none';const arrow=main.querySelector('.denmoku-tree-arrow');if(arrow)arrow.textContent=open?'▼':'▶';wrap.classList.toggle('open',open);};
     main.onclick=toggle;
