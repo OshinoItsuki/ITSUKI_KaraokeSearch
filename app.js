@@ -88,7 +88,10 @@ function songHref(s){return `#song/${encodeURIComponent(String(s?.id||''))}`}
 function entityHref(mode,value){if(['artist','lyricist','composer','arranger'].includes(mode))return `#person/${encodeURIComponent(String(value||''))}/${encodeURIComponent(mode)}`;return `#entity/${encodeURIComponent(String(mode||''))}/${encodeURIComponent(String(value||''))}`}
 function songFeatureTags(s){
   const out=[];const f=s?.features||{};
-  if(f.mv_pv)out.push(['MV・PV','mv-pv']);
+  // KaraokeLocal song-list badge: recognize MV/PV directly from DB tags too.
+  // This is separate from the configurable feature-page filter flags.
+  const tags=new Set(String(s?.tags||'').split(/[,，、;；|\n\r]+/).map(v=>v.normalize('NFKC').trim().toLowerCase()).filter(Boolean));
+  if(f.mv_pv||['mv','pv','mv・pv'].some(v=>tags.has(v)))out.push(['MV・PV','mv-pv']);
   if(f.anime)out.push(['アニメ映像','anime']);
   if(f.tokusatsu)out.push(['特撮映像','tokusatsu']);
   if(f.live)out.push(['ライブ映像','live']);

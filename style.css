@@ -2130,3 +2130,9 @@ html[data-theme="joy"] .web-list-feature-tag{
 /* v0.7.22: MV・PV label matches the other JOYSOUND feature labels. */
 .web-list-feature-tag.mv-pv{background:#3f2054;border-color:#9863b5;color:#fff}
 html[data-theme="joy"] .web-list-feature-tag.mv-pv{color:#9a2671}
+
+/* v0.7.23: MV・PV badge visibility in DAM theme (matching the main ITSUKI song list). */
+html[data-theme="dam"] .web-list-feature-tag.mv-pv{
+  color:#fff;background:linear-gradient(180deg,#5c2c77,#321340);
+  border-color:#a968be;font-weight:900;
+}
