@@ -2126,3 +2126,7 @@ html[data-theme="joy"] .web-list-feature-tag{
     font-size:12px;
   }
 }
+
+/* v0.7.22: MV・PV label matches the other JOYSOUND feature labels. */
+.web-list-feature-tag.mv-pv{background:#3f2054;border-color:#9863b5;color:#fff}
+html[data-theme="joy"] .web-list-feature-tag.mv-pv{color:#9a2671}
