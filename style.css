@@ -2136,3 +2136,18 @@ html[data-theme="dam"] .web-list-feature-tag.mv-pv{
   color:#fff;background:linear-gradient(180deg,#5c2c77,#321340);
   border-color:#a968be;font-weight:900;
 }
+
+/* v0.7.24: 映像別の歌手一覧をアニメ・ゲーム映像と同じ全幅に統一 */
+.browse-page .browse-results > .browse-entity-row.artist-browse-entity-row {
+  width: 100%;
+  min-width: 0;
+  max-width: none;
+  justify-self: stretch;
+}
+.browse-page .browse-results > .browse-entity-row.artist-browse-entity-row > span:first-child {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.browse-page .browse-results > .browse-entity-row.artist-browse-entity-row > .denmoku-entity-count {
+  flex-shrink: 0;
+}
