@@ -2151,3 +2151,13 @@ html[data-theme="dam"] .web-list-feature-tag.mv-pv{
 .browse-page .browse-results > .browse-entity-row.artist-browse-entity-row > .denmoku-entity-count {
   flex-shrink: 0;
 }
+
+/* v0.7.25: manually configured TOP count + latest scanned video date */
+.top-menu-page .home-title{align-items:stretch}
+.web-top-count-row{display:flex;align-items:center;gap:18px;flex-wrap:wrap;width:100%;margin-top:4px}
+.web-top-count-row .web-top-count{margin-top:0;white-space:nowrap}
+.web-top-newest{margin-left:auto;font-size:13px;font-weight:800;color:#cfcfcf;white-space:nowrap}
+html[data-theme="joy"] .web-top-newest{color:#b43538}
+@media(max-width:650px){.web-top-count-row{gap:8px}.web-top-newest{margin-left:0;font-size:12px}}
+
+.top-menu-page .home-title>.web-top-newest{align-self:flex-end;margin-left:auto;margin-bottom:4px}

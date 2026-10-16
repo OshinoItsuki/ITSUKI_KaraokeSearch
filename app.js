@@ -172,12 +172,20 @@ function topAdHtml(){
   return `<section class="web-top-admax" aria-label="スポンサー広告"><div class="web-top-admax-title">広告</div><div id="itsuki-top-admax-slot" class="web-top-admax-slot"></div></section>`;
 }
 
+function latestVideoDateLabel(){
+  const sec=Number(DATA.latest_video_modified_at||0);
+  if(!Number.isFinite(sec)||sec<=0)return '';
+  const d=new Date(sec*1000);
+  if(Number.isNaN(d.getTime()))return '';
+  const fmt=new Intl.DateTimeFormat('ja-JP',{timeZone:'Asia/Tokyo',month:'numeric',day:'numeric'});
+  return fmt.format(d)+'動画追加';
+}
 function renderTop(){
-  document.title='ITSUKI - 曲検索';
+  document.title='ITSUKI WEB検索サイト - TOP';
   pageShell(`
     ${topNav(true)}
     <div class="home-page top-menu-page">
-      <div class="top home-title"><div><div class="big">🎤 ITSUKI</div><div class="home-subtitle">曲検索</div><div class="web-top-count">${nf(DATA.song_count)}曲 / ${nf(DATA.video_count)}動画</div></div><div class="web-static-meta">Web Song Search</div></div>
+      <div class="top home-title"><div><div class="big">🎤 ITSUKI</div><div class="home-subtitle">曲検索</div><div class="web-top-count">${Number.isSafeInteger(DATA.public_song_count)?nf(DATA.public_song_count)+'曲':'曲数未設定'}</div></div><div class="web-top-newest">${latestVideoDateLabel()}</div></div>
       <section class="category-section top-category-section">
         <div class="top-main-grid">
           <a class="category-btn top-main-btn c-red" href="#updates"><span class="category-icon">✨</span><span>新曲・更新曲</span></a>
@@ -362,7 +370,7 @@ function renderSearch(initialMode='title',directPerson='',directRole=''){
   const searchHistoryAbort=new AbortController();window.__itsukiSearchHistoryAbort=searchHistoryAbort;
   let currentMode=['person','title','tie-up','keyword'].includes(initialMode)?initialMode:'title';
   let selectedEntity='',selectedRole='',selectedRoleCounts={},selectedRelations=[],lastEntityQuery='',personTrail=[],lastSongResults=[],currentSongKanaBucket='';
-  document.title=`ITSUKI - ${currentMode==='person'?'人物検索':modeLabels[currentMode]+'検索'}`;
+  document.title=`ITSUKI WEB検索サイト - ${currentMode==='person'?'人物検索':modeLabels[currentMode]+'検索'}`;
   app.innerHTML=`<div class="wrap denmoku-page">
     ${joyHeader()}
     <div class="denmoku-toolbar"><a class="denmoku-top-btn" href="#top">TOP</a><button class="denmoku-remote-btn" type="button" disabled title="公開版では利用できません">リモコン</button><div class="denmoku-searchbox"><input id="searchInput" type="text" autocomplete="off" enterkeyhint="search" placeholder="検索語を入力" aria-controls="searchHistoryPanel" aria-expanded="false"><button id="clearBtn" type="button" title="検索語・検索結果をクリア" aria-label="検索語と検索結果をクリア">×</button><div id="searchHistoryPanel" class="denmoku-history-panel" hidden></div></div><button id="searchBtn" class="denmoku-hit-btn" type="button"><span id="hitCount">0</span><small>Hits</small></button></div>
@@ -570,7 +578,7 @@ function featureRuleNote(key){
 }
 function renderFeature(slug){
   const d=featureDefs[slug]||featureDefs['mv-pv'],rows=DATA.songs.filter(s=>s.features&&s.features[d[0]]),artistList=['mv_pv','live','parts'].includes(d[0]),pmap=peopleMap();
-  document.title='ITSUKI - '+d[2];
+  document.title='ITSUKI WEB検索サイト - '+d[2];
   pageShell(`${topNav()}<header class="browse-header"><div class="browse-icon">${d[1]}</div><div><div class="browse-title">${d[2]}</div><div class="browse-note">${featureRuleNote(d[0])}</div></div></header><div id="browseStickyArea" class="browse-sticky-area"><div id="entityHeader" class="browse-entity-header" style="display:none"></div><div id="featureFilterDock" class="tieup-filter-dock"><div id="featureNameFilter" class="artist-name-filter"></div><div id="featureKanaBar" class="kana-jump"></div></div></div><main id="browseResults" class="browse-results"></main>`,'browse-page');
   const root=document.getElementById('browseResults'),head=document.getElementById('entityHeader'),dock=document.getElementById('featureFilterDock'),filter=document.getElementById('featureNameFilter'),kana=document.getElementById('featureKanaBar'),kanaKeys=['あ','か','さ','た','な','は','ま','や','ら','わ'];
   const map=new Map();
@@ -597,7 +605,7 @@ function renderFeature(slug){
 }
 
 function renderFolderBrowser(){
-  document.title='ITSUKI - フォルダから探す';
+  document.title='ITSUKI WEB検索サイト - フォルダから探す';
   const fb=DATA.folder_browser||{};
   if(!fb.available||!Array.isArray(fb.roots)||!fb.roots.length){
     pageShell(`${topNav()}<div class="card bad"><div class="big">フォルダ一覧を作成できません</div><p>KaraokeLocalに動画ルートが設定され、動画スキャンが完了しているか確認してください。</p></div>`);
@@ -818,7 +826,7 @@ function entityDisplayName(mode,value){
 }
 function renderEntity(mode,value){
   const label=entityLabel(mode), display=entityDisplayName(mode,value), list=relatedSongs(mode,value);
-  document.title=`ITSUKI - ${display}`;
+  document.title=`ITSUKI WEB検索サイト - ${display}`;
   pageShell(`${topNav()}<header class="browse-header web-related-header"><div class="browse-icon">🔗</div><div><div class="browse-title">${esc(display||label)}</div><div class="browse-note">${esc(label)}から関連する曲 / ${nf(list.length)}曲</div></div></header><div class="web-detail-toolbar"><button id="relatedBack" type="button">← 戻る</button></div><main id="relatedResults" class="browse-results"></main>`,'browse-page');
   document.getElementById('relatedBack').onclick=()=>{if(history.length>1)history.back();else location.hash='#top'};
   renderSongList(document.getElementById('relatedResults'),list,`${display||label}に関連する曲はありません`,500);
@@ -839,8 +847,8 @@ function categoryDetailCell(s){
 }
 function renderSongDetail(songId){
   const song=DATA.songs.find(s=>String(s.id)===String(songId));
-  if(!song){document.title='ITSUKI - 曲が見つかりません';pageShell(`${topNav()}<div class="card bad"><div class="big">曲が見つかりません</div><p>公開データが更新された可能性があります。</p></div>`);return}
-  document.title=`ITSUKI - ${song.song_name||'曲詳細'}`;
+  if(!song){document.title='ITSUKI WEB検索サイト - 曲が見つかりません';pageShell(`${topNav()}<div class="card bad"><div class="big">曲が見つかりません</div><p>公開データが更新された可能性があります。</p></div>`);return}
+  document.title=`ITSUKI WEB検索サイト - ${song.song_name||'曲詳細'}`;
   const badges=[];
   if(song.video_count)badges.push(`${song.video_count}動画`);
   for(const x of (song.vocal_labels||[]))badges.push(x);
@@ -944,7 +952,7 @@ function renderSongDetail(songId){
 }
 
 function renderAll(){
-  document.title='ITSUKI - 全曲一覧';
+  document.title='ITSUKI WEB検索サイト - 全曲一覧';
   const kanaKeys=['あ','か','さ','た','な','は','ま','や','ら','わ'];
   const state={title:'',artist:'',kana:'',features:new Set()};
   pageShell(`${topNav()}<header class="browse-header"><div class="browse-icon">📚</div><div><div class="browse-title">全曲一覧</div><div class="browse-note">選曲可能な${nf(DATA.song_count)}曲</div></div></header>
@@ -977,10 +985,10 @@ function renderAll(){
   render();
 }
 
-function renderForeign(){const counts=new Map();for(const s of DATA.songs)for(const l of (s.languages||[]))counts.set(l,(counts.get(l)||0)+1);const langs=[...counts.entries()].sort((a,b)=>a[0].localeCompare(b[0],'ja'));document.title='ITSUKI - 外国曲';pageShell(`${topNav()}<header class="browse-header"><div class="browse-icon">🌐</div><div><div class="browse-title">外国曲</div><div class="browse-note">言語を選択して曲一覧を表示</div></div></header><div id="entityHeader" class="browse-entity-header" style="display:none"></div><main id="browseResults" class="browse-results"><div class="web-language-grid">${langs.map(([l,c])=>`<button class="web-language-btn" data-lang="${esc(l)}"><img src="./assets/flags/${flagPath(l)}" alt=""><strong>${esc(l)}</strong><small>${nf(c)}曲</small></button>`).join('')}</div></main>`,'browse-page');const root=document.getElementById('browseResults'),head=document.getElementById('entityHeader');root.querySelectorAll('[data-lang]').forEach(b=>b.onclick=()=>{const l=b.dataset.lang;head.style.display='flex';head.innerHTML=`<button type="button">← 言語一覧へ</button><strong>${esc(l)}</strong>`;head.querySelector('button').onclick=renderForeign;renderSongList(root,DATA.songs.filter(s=>(s.languages||[]).includes(l)))})}
+function renderForeign(){const counts=new Map();for(const s of DATA.songs)for(const l of (s.languages||[]))counts.set(l,(counts.get(l)||0)+1);const langs=[...counts.entries()].sort((a,b)=>a[0].localeCompare(b[0],'ja'));document.title='ITSUKI WEB検索サイト - 外国曲';pageShell(`${topNav()}<header class="browse-header"><div class="browse-icon">🌐</div><div><div class="browse-title">外国曲</div><div class="browse-note">言語を選択して曲一覧を表示</div></div></header><div id="entityHeader" class="browse-entity-header" style="display:none"></div><main id="browseResults" class="browse-results"><div class="web-language-grid">${langs.map(([l,c])=>`<button class="web-language-btn" data-lang="${esc(l)}"><img src="./assets/flags/${flagPath(l)}" alt=""><strong>${esc(l)}</strong><small>${nf(c)}曲</small></button>`).join('')}</div></main>`,'browse-page');const root=document.getElementById('browseResults'),head=document.getElementById('entityHeader');root.querySelectorAll('[data-lang]').forEach(b=>b.onclick=()=>{const l=b.dataset.lang;head.style.display='flex';head.innerHTML=`<button type="button">← 言語一覧へ</button><strong>${esc(l)}</strong>`;head.querySelector('button').onclick=renderForeign;renderSongList(root,DATA.songs.filter(s=>(s.languages||[]).includes(l)))})}
 
 function renderTieup(){
-  document.title='ITSUKI - タイアップ';
+  document.title='ITSUKI WEB検索サイト - タイアップ';
   const catMap=new Map(),seriesMap=new Map();
   for(const s of DATA.songs){
     const ids=vals(s.tie_up_category_id),names=vals(s.tie_up_category);
@@ -1059,7 +1067,7 @@ function renderTieup(){
 }
 
 function renderEra(){
-  document.title='ITSUKI - あの頃・この頃';
+  document.title='ITSUKI WEB検索サイト - あの頃・この頃';
   const currentYear=new Date().getFullYear();
   const yearValues=field=>{
     const out=[];
@@ -1226,7 +1234,7 @@ function renderUpdateArtistGroups(items){
   ).join('');
 }
 function renderUpdates(){
-  document.title='ITSUKI - 新曲・更新曲';
+  document.title='ITSUKI WEB検索サイト - 新曲・更新曲';
   const days=Math.max(1,Math.min(60,Number(DATA.new_update_days||15)||15));
   const now=new Date();
   const todayStart=Math.floor(new Date(now.getFullYear(),now.getMonth(),now.getDate()).getTime()/1000);
@@ -1303,7 +1311,7 @@ function renderUpdates(){
 }
 
 function renderSettings(){
-  document.title='ITSUKI - 表示設定';
+  document.title='ITSUKI WEB検索サイト - 表示設定';
   const selected=currentTheme();
   pageShell(`${topNav()}<section class="theme-settings-page"><div class="theme-settings-head"><span class="theme-settings-back">表示</span><div><h1>表示テーマ</h1><p>この端末のブラウザにだけ保存されます。</p></div></div><div class="theme-choice-grid theme-choice-main"><button type="button" class="theme-choice joy-choice ${selected==='joy'?'selected':''}" data-theme-choice="joy"><span class="theme-preview joy-preview"><i></i><b></b><b></b><b></b></span><strong>JOYSOUND風</strong><small>白い一覧・赤い操作色・全画面共通の上部操作帯を使います。</small></button><button type="button" class="theme-choice dam-choice ${selected==='dam'?'selected':''}" data-theme-choice="dam"><span class="theme-preview dam-preview"><i></i><b></b><b></b><b></b></span><strong>DAM WAO!風（ITSUKI風）</strong><small>これまでのITSUKIの黒背景・カラフルな大型ボタン表示です。</small></button></div><div class="theme-setting-note">設定はLocalStorageへ保存するため、公開サイトを更新してもこの端末では選択したテーマを維持します。旧「従来のITSUKI」設定は自動的にDAM WAO!風へ移行します。</div></section>`,`theme-settings-wrap`);
   document.querySelectorAll('[data-theme-choice]').forEach(btn=>btn.onclick=()=>{setTheme(btn.dataset.themeChoice);renderSettings()});
