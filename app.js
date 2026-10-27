@@ -58,6 +58,17 @@ function formatGeneratedAt(value){
 function footer(){return `<div class="web-static-footer"><strong>ITSUKI Web Song Search</strong><br><span>${esc(formatGeneratedAt(DATA.generated_at))}</span></div>`}
 function joyHeader(){return `<nav class="joy-command-bar" aria-label="Web検索メニュー"><a class="joy-home-tab" href="#top"><strong>曲を選ぶ</strong><small>WEB検索 TOPへ</small></a><a href="#search/title">🎵 曲名</a><a href="#search/person">🎤 人物</a><a href="#tieup">🎞 タイアップ</a><a href="#feature/anime">📺 映像</a><a class="joy-reserve-tab" href="#updates">✨ 新譜</a><a class="joy-settings-tab" href="#settings">⚙ 表示</a></nav>`}
 function topNav(home=false){return home?'':`<div class="top nav common-user-nav classic-nav"><a class="navbtn" href="#top">🏠 TOP</a><a class="navbtn" href="#settings">⚙ 表示設定</a></div>`}
+document.addEventListener('click',event=>{
+  if(event.target?.id!=='medleyOpen')return;
+  const id=decodeURIComponent((location.hash||'').replace(/^#song\//,''));
+  const song=DATA?.songs?.find(s=>String(s.id)===id);
+  if(!song?.is_medley)return;
+  const items=Array.isArray(song.medley_items)?song.medley_items:[];
+  const dialog=document.createElement('dialog');dialog.className='web-medley-dialog';
+  dialog.innerHTML=`<h2>内容曲リスト</h2><div class="web-medley-items">${items.length?items.map((x,i)=>`<div class="web-medley-item"><strong>${esc(x.order||i+1)}. ${esc(x.title)}</strong>${x.note?`<small>${esc(x.note)}</small>`:''}</div>`).join(''):'<p>内容曲は登録されていません。</p>'}</div><button type="button" class="web-medley-close">閉じる</button>`;
+  document.body.appendChild(dialog);dialog.querySelector('button').onclick=()=>dialog.close();
+  dialog.addEventListener('close',()=>dialog.remove());dialog.showModal();
+});
 function pageShell(inner, cls='web-static-page'){
   app.innerHTML=`<div class="wrap ${cls} joy-stage">${joyHeader()}${inner}${footer()}</div>`;
   window.scrollTo(0,0);
@@ -184,6 +195,7 @@ function renderTop(){
           <a class="category-btn top-middle-btn c-emerald" href="#feature/anime"><span class="category-icon">📺</span><span>アニメ・ゲーム映像</span></a>
           <a class="category-btn top-middle-btn c-orange" href="#feature/tokusatsu"><span class="category-icon">⚡</span><span>特撮映像</span></a>
           <a class="category-btn top-middle-btn c-sky" href="#feature/parts"><span class="category-icon">👥</span><span>パート分け</span></a>
+          ${(DATA.songs||[]).some(s=>s.is_medley)?'<a class="category-btn top-middle-btn c-pink" href="#medley"><span class="category-icon">🎼</span><span>メドレー</span></a>':''}
           <a class="category-btn top-middle-btn c-rose" href="#era"><span class="category-icon">🕒</span><span>あの頃・この頃</span></a>
           <a class="category-btn top-middle-btn c-gold" href="#search/keyword"><span class="category-icon">🔎</span><span>キーワード</span></a>
           <a class="category-btn top-middle-btn c-teal" href="#tieup"><span class="category-icon">🎞️</span><span>タイアップ</span></a>
@@ -559,6 +571,13 @@ function featureRuleNote(key){
   const via=(key==='anime'||key==='tokusatsu')?'タイアップ作品':'歌手名';
   return labels.length?`設定タグ「${labels.map(esc).join(' / ')}」のいずれかが付いた曲を${via}から選択`:`設定された楽曲タグに一致する曲を${via}から選択`;
 }
+function renderMedleys(){
+  document.title='ITSUKI WEB検索サイト - メドレー';
+  const songs=(DATA.songs||[]).filter(s=>s.is_medley);
+  pageShell(`${topNav()}<header class="browse-header"><div class="browse-icon">🎼</div><div><div class="browse-title">メドレー</div><div class="browse-note">メドレー属性の付いた曲を一覧で表示</div></div></header><main class="browse-results" id="medleyResults"></main>`,'browse-page');
+  renderSongList(document.getElementById('medleyResults'),songs,'メドレー曲がありません',100000);
+}
+
 function renderFeature(slug){
   const d=featureDefs[slug]||featureDefs['mv-pv'],rows=DATA.songs.filter(s=>s.features&&s.features[d[0]]),artistList=['mv_pv','live','parts'].includes(d[0]),pmap=peopleMap();
   document.title='ITSUKI WEB検索サイト - '+d[2];
@@ -832,6 +851,8 @@ function renderSongDetail(songId){
   const song=DATA.songs.find(s=>String(s.id)===String(songId));
   if(!song){document.title='ITSUKI WEB検索サイト - 曲が見つかりません';pageShell(`${topNav()}<div class="card bad"><div class="big">曲が見つかりません</div><p>公開データが更新された可能性があります。</p></div>`);return}
   document.title=`ITSUKI WEB検索サイト - ${song.song_name||'曲詳細'}`;
+  const medleyItems=Array.isArray(song.medley_items)?song.medley_items:[];
+  const medleyButton=song.is_medley?`<button type="button" class="web-medley-open" id="medleyOpen">内容曲リスト</button>`:'';
   const badges=[];
   if(song.video_count)badges.push(`${song.video_count}動画`);
   for(const x of (song.vocal_labels||[]))badges.push(x);
@@ -887,7 +908,7 @@ function renderSongDetail(songId){
       infoRow('公開情報',plainValues(uniqueValues(badges)),true),
     ].join('');
     pageShell(`${topNav()}<div class="joy-song-detail-layout">
-      <div class="joy-song-detail-topline"><button id="songDetailBack" type="button">← 戻る</button><span>曲詳細</span></div>
+      <div class="joy-song-detail-topline"><button id="songDetailBack" type="button">← 戻る</button><span>曲詳細</span>${medleyButton}</div>
       <section class="joy-song-summary-card">
         <div class="joy-song-summary-main">
           <h1>${esc(song.song_name||'曲名不明')}</h1>
@@ -906,6 +927,7 @@ function renderSongDetail(songId){
   }else{
     pageShell(`${topNav()}<div class="web-song-detail-page">
       <div class="web-detail-toolbar"><button id="songDetailBack" type="button">← 戻る</button><span>曲詳細</span></div>
+      ${medleyButton}
       <section class="reserve-song-card web-song-detail-card">
         <div class="reserve-song-line reserve-song-title-line"><div class="reserve-title">${esc(song.song_name||'曲名不明')}</div></div>
         ${song.song_ruby?`<div class="web-detail-ruby">${esc(song.song_ruby)}</div>`:''}
@@ -1311,6 +1333,7 @@ function route(){
   if(a==='search')return renderSearch(b||'title');
   if(a==='person')return renderSearch('person',decodeURIComponent(b||''),decodeURIComponent(parts[2]||''));
   if(a==='feature')return renderFeature(b);
+  if(a==='medley')return renderMedleys();
   if(a==='folder')return renderFolderBrowser();
   if(a==='all')return renderAll();
   if(a==='foreign')return renderForeign();
