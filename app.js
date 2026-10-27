@@ -157,21 +157,6 @@ function creatorSupportHtml(){
   </section>`;
 }
 
-// AdMax ad is mounted only on TOP. Never insert it into search results or
-// create synthetic refreshes/impressions. Missing ad scripts do not block navigation.
-function mountTopAd(){
-  const slot=document.getElementById('itsuki-top-admax-slot');
-  if(!slot)return;
-  const script=document.createElement('script');
-  script.src='https://adm.shinobi.jp/s/7b255a8a84e1a99b2cf3daf98e0e89b8';
-  script.async=true;
-  script.onerror=()=>{slot.classList.add('admax-unavailable')};
-  slot.appendChild(script);
-}
-function topAdHtml(){
-  return `<section class="web-top-admax" aria-label="スポンサー広告"><div class="web-top-admax-title">広告</div><div id="itsuki-top-admax-slot" class="web-top-admax-slot"></div></section>`;
-}
-
 function latestVideoDateLabel(){
   const sec=Number(DATA.latest_video_modified_at||0);
   if(!Number.isFinite(sec)||sec<=0)return '';
@@ -210,9 +195,7 @@ function renderTop(){
       ${creatorShopHtml()}
       ${creatorYoutubeHtml()}
       ${creatorSupportHtml()}
-      ${topAdHtml()}
     </div>`);
-  mountTopAd();
 }
 
 const modeLabels={person:'人物',artist:'歌手',lyricist:'作詞',composer:'作曲',arranger:'編曲',title:'曲名','tie-up':'タイアップ',keyword:'キーワード'};
