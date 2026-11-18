@@ -64,10 +64,15 @@ document.addEventListener('click',event=>{
   const song=DATA?.songs?.find(s=>String(s.id)===id);
   if(!song?.is_medley)return;
   const items=Array.isArray(song.medley_items)?song.medley_items:[];
-  const dialog=document.createElement('dialog');dialog.className='web-medley-dialog';
-  dialog.innerHTML=`<h2>内容曲リスト</h2><div class="web-medley-items">${items.length?items.map((x,i)=>`<div class="web-medley-item"><strong>${esc(x.order||i+1)}. ${esc(x.title)}</strong>${x.note?`<small>${esc(x.note)}</small>`:''}</div>`).join(''):'<p>内容曲は登録されていません。</p>'}</div><button type="button" class="web-medley-close">閉じる</button>`;
-  document.body.appendChild(dialog);dialog.querySelector('button').onclick=()=>dialog.close();
-  dialog.addEventListener('close',()=>dialog.remove());dialog.showModal();
+  const dialog=document.createElement('dialog');
+  dialog.className='web-medley-dialog';
+  const itemHtml=items.length?items.map((x,i)=>`<li class="web-medley-item"><span class="web-medley-item-num">${esc(x.order??i+1)}</span><div class="web-medley-item-main"><strong>${esc(x.title)}</strong>${x.note?`<small>${esc(x.note)}</small>`:''}</div></li>`).join(''):'<li class="web-medley-empty">内容曲は登録されていません。</li>';
+  dialog.innerHTML=`<div class="web-medley-dialog-head"><div class="web-medley-dialog-kicker">🎼 メドレー</div><h2 id="webMedleyDialogTitle">内容曲リスト</h2><p class="web-medley-dialog-subtitle">${esc(song.song_name||'')}</p></div><ol class="web-medley-items">${itemHtml}</ol><div class="web-medley-dialog-actions"><button type="button" class="web-medley-close">閉じる</button></div>`;
+  dialog.setAttribute('aria-labelledby','webMedleyDialogTitle');
+  document.body.appendChild(dialog);
+  dialog.querySelector('.web-medley-close').onclick=()=>dialog.close();
+  dialog.addEventListener('close',()=>dialog.remove(),{once:true});
+  dialog.showModal();
 });
 function pageShell(inner, cls='web-static-page'){
   app.innerHTML=`<div class="wrap ${cls} joy-stage">${joyHeader()}${inner}${footer()}</div>`;
@@ -574,10 +579,45 @@ function featureRuleNote(key){
 function renderMedleys(){
   document.title='ITSUKI WEB検索サイト - メドレー';
   const songs=(DATA.songs||[]).filter(s=>s.is_medley);
-  pageShell(`${topNav()}<header class="browse-header"><div class="browse-icon">🎼</div><div><div class="browse-title">メドレー</div><div class="browse-note">メドレー属性の付いた曲を一覧で表示</div></div></header><main class="browse-results" id="medleyResults"></main>`,'browse-page');
-  renderSongList(document.getElementById('medleyResults'),songs,'メドレー曲がありません',100000);
+  const pmap=peopleMap();
+  const groupMap=new Map();
+  for(const song of songs){
+    const name=String(song.artists||'歌手情報なし').trim()||'歌手情報なし';
+    const key=norm(name);
+    const ruby=String(song.artist_rubies||pmap.get(key)?.ruby||name).trim();
+    if(!groupMap.has(key))groupMap.set(key,{name,ruby,songs:[]});
+    groupMap.get(key).songs.push(song);
+  }
+  const groups=[...groupMap.values()].sort((a,b)=>hira(a.ruby||a.name).localeCompare(hira(b.ruby||b.name),'ja')||a.name.localeCompare(b.name,'ja'));
+  const kanaKeys=['あ','か','さ','た','な','は','ま','や','ら','わ'];
+  const filterState={q:'',kana:''};
+  pageShell(`${topNav()}<header class="browse-header"><div class="browse-icon">🎼</div><div><div class="browse-title">メドレー</div><div class="browse-note">メドレー属性の付いた曲を歌手ごとに表示</div></div></header><div class="medley-filter-dock"><div class="artist-name-filter" id="medleyArtistFilter"></div><div class="kana-jump" id="medleyKanaBar"></div></div><main class="browse-results medley-grouped-results" id="medleyResults"></main>`,'browse-page medley-page');
+  const filter=document.getElementById('medleyArtistFilter');
+  const kana=document.getElementById('medleyKanaBar');
+  const target=document.getElementById('medleyResults');
+  const input=document.createElement('input');
+  input.type='search';input.className='artist-name-filter-input';input.placeholder='歌手名で絞り込み';input.setAttribute('aria-label','歌手名で絞り込み');
+  const clear=document.createElement('button');clear.type='button';clear.className='artist-name-filter-clear';clear.textContent='クリア';clear.disabled=true;
+  const label=document.createElement('span');label.className='artist-name-filter-label';label.textContent='歌手名';
+  filter.append(label,input,clear);
+  const kanaButtons=new Map();
+  for(const k of kanaKeys){
+    const b=document.createElement('button');b.type='button';b.textContent=k;
+    b.disabled=!groups.some(g=>kanaBucket(g.ruby||g.name)===k);
+    b.setAttribute('aria-pressed','false');
+    b.onclick=()=>{filterState.kana=filterState.kana===k?'':k;render();};
+    kana.appendChild(b);kanaButtons.set(k,b);
+  }
+  input.oninput=()=>{filterState.q=input.value;clear.disabled=!filterState.q;render()};
+  clear.onclick=()=>{input.value='';filterState.q='';clear.disabled=true;render();input.focus()};
+  function render(){
+    const q=norm(filterState.q);
+    const shown=groups.filter(g=>(!filterState.kana||kanaBucket(g.ruby||g.name)===filterState.kana)&&(!q||norm(`${g.name} ${g.ruby}`).includes(q)));
+    for(const [k,b] of kanaButtons){b.classList.toggle('active',filterState.kana===k);b.setAttribute('aria-pressed',String(filterState.kana===k));}
+    target.innerHTML=shown.length?shown.map(g=>`<section class="medley-artist-group"><h2 class="medley-artist-heading"><span>${esc(g.name)}</span><small>${nf(g.songs.length)}曲</small></h2><div class="medley-artist-songs">${[...g.songs].sort((a,b)=>songReadingKey(a).localeCompare(songReadingKey(b),'ja')).map(songRow).join('')}</div></section>`).join(''):'<div class="browse-empty">この条件に該当するメドレーはありません</div>';
+  }
+  render();
 }
-
 function renderFeature(slug){
   const d=featureDefs[slug]||featureDefs['mv-pv'],rows=DATA.songs.filter(s=>s.features&&s.features[d[0]]),artistList=['mv_pv','live','parts'].includes(d[0]),pmap=peopleMap();
   document.title='ITSUKI WEB検索サイト - '+d[2];

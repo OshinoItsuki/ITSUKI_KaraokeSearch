@@ -2161,3 +2161,48 @@ html[data-theme="joy"] .web-top-newest{color:#b43538}
 .web-medley-item{padding:10px 4px;border-bottom:1px solid #5a4660;display:flex;flex-direction:column;gap:4px}
 .web-medley-item small{color:#bbb}
 .web-medley-close{margin-top:12px;padding:8px 28px;border-radius:6px;background:#693388;color:white;border:1px solid #af84c2;cursor:pointer}
+
+
+/* v0.7.33: medleys grouped by artist with shared kana filter */
+.medley-filter-dock{display:grid;gap:7px;padding:9px;border:1px solid #4f3b64;border-radius:10px;background:#110e18;margin-bottom:10px}
+.medley-grouped-results{align-content:start}
+.medley-artist-group{min-width:0;width:100%}
+.medley-artist-heading{display:flex;align-items:center;justify-content:space-between;gap:16px;margin:0;padding:11px 14px;border-left:5px solid #ed831f;border-bottom:1px solid #49413c;background:linear-gradient(90deg,#382615,#191511 58%,#111);font-size:18px;color:#fff;line-height:1.3;overflow-wrap:anywhere}
+.medley-artist-heading span{min-width:0;overflow-wrap:anywhere}
+.medley-artist-heading small{font-size:12px;white-space:nowrap;color:#e4c9aa}
+.medley-artist-songs{display:grid;grid-template-columns:minmax(0,1fr);gap:5px;margin-bottom:8px}
+.medley-page .medley-artist-songs .denmoku-song-row{width:100%;max-width:none;min-width:0}
+html[data-theme="joy"] .medley-filter-dock{background:#f4f4f2;border:1px solid #c8c8c8;border-radius:0}
+html[data-theme="joy"] .medley-artist-heading{border-left-color:#d4331e;border-bottom:1px solid #ccc;background:linear-gradient(90deg,#fff0ec,#f5f5f3);color:#91271b}
+html[data-theme="joy"] .medley-artist-heading small{color:#bf3829}
+html[data-theme="joy"] .medley-artist-songs{gap:0;margin:0}
+html[data-theme="joy"] .medley-artist-group+.medley-artist-group{border-top:2px solid #d1d1d1}
+/* Medley details: theme-aware original JOYSOUND-like list vs dark DAM modal */
+.web-medley-dialog{box-sizing:border-box;width:min(94vw,650px);max-height:85vh;padding:0;border:1px solid #9160b3;border-radius:13px;background:#17111e;color:#fff;box-shadow:0 20px 60px #0008;overflow:hidden}
+.web-medley-dialog::backdrop{background:rgba(0,0,0,.68)}
+.web-medley-dialog-head{padding:20px 24px 14px;border-bottom:1px solid #65436f;background:linear-gradient(120deg,#291530,#160f20)}
+.web-medley-dialog-kicker{font-size:12px;font-weight:800;color:#d0a3e9}
+.web-medley-dialog h2{margin:5px 0 4px;font-size:25px;line-height:1.3}
+.web-medley-dialog-subtitle{margin:0;font-size:14px;opacity:.84;overflow-wrap:anywhere}
+.web-medley-dialog .web-medley-items{list-style:none;display:block;max-height:50vh;overflow:auto;margin:0;padding:5px 24px}
+.web-medley-dialog .web-medley-item{display:flex;flex-direction:row;gap:12px;align-items:flex-start;padding:13px 4px;border-bottom:1px solid #4d3a54}
+.web-medley-item-num{display:flex;align-items:center;justify-content:center;min-width:30px;height:30px;border:1px solid #86629c;border-radius:7px;font-size:14px;font-weight:900;color:#fff;background:#543269}
+.web-medley-item-main{display:flex;flex-direction:column;gap:4px;min-width:0;overflow-wrap:anywhere}
+.web-medley-item-main strong{font-size:15px}
+.web-medley-item-main small{font-size:12px;color:#c9bbce}
+.web-medley-empty{padding:22px 6px;color:#bbb}
+.web-medley-dialog-actions{display:flex;justify-content:flex-end;padding:13px 24px 19px}
+.web-medley-dialog .web-medley-close{margin:0;min-width:110px;padding:10px 24px;border:1px solid #ac83c4;border-radius:7px;background:#693388;color:#fff;cursor:pointer;font-weight:800}
+html[data-theme="joy"] .web-medley-dialog{border:1px solid #a6a6a6;border-top:5px solid #d63a25;border-radius:4px;background:#fff;color:#222;box-shadow:0 20px 60px #0007}
+html[data-theme="joy"] .web-medley-dialog-head{border-bottom:1px solid #d4d4d4;background:linear-gradient(180deg,#fff,#f3f3f3);padding:18px 23px 13px}
+html[data-theme="joy"] .web-medley-dialog-kicker{color:#c53524}
+html[data-theme="joy"] .web-medley-dialog h2{color:#222}
+html[data-theme="joy"] .web-medley-dialog-subtitle{color:#666;opacity:1}
+html[data-theme="joy"] .web-medley-dialog .web-medley-item{border-bottom:1px solid #dadada}
+html[data-theme="joy"] .web-medley-item-num{background:#fff2ee;border:1px solid #e3b6ab;border-radius:3px;color:#ba3526}
+html[data-theme="joy"] .web-medley-item-main strong{color:#222}
+html[data-theme="joy"] .web-medley-item-main small,html[data-theme="joy"] .web-medley-empty{color:#777}
+html[data-theme="joy"] .web-medley-dialog-actions{background:#f5f5f5;border-top:1px solid #ddd}
+html[data-theme="joy"] .web-medley-dialog .web-medley-close{border:1px solid #b32d20;border-radius:3px;background:linear-gradient(180deg,#e24734,#bb281c);color:#fff}
+@media(max-width:650px){.medley-artist-heading{font-size:16px;padding:10px}.web-medley-dialog-head{padding:15px 16px 12px}.web-medley-dialog .web-medley-items{padding:5px 14px}.web-medley-dialog-actions{padding:12px 14px 16px}}
+.medley-page .medley-grouped-results{grid-template-columns:minmax(0,1fr)}
